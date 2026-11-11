@@ -1,0 +1,36 @@
+{
+  "name": "matrix-bridge",
+  "version": "0.3.0",
+  "description": "Connect ZCode to Matrix as an autonomous 24/7 bot. Direct homeserver sync, per-room workspace bindings, thread sub-sessions, admin whitelists, invite/message policies and federation privacy guards. Chat messages are dispatched to headless `zcode -p` sessions.",
+  "author": {
+    "name": "BigBear"
+  },
+  "license": "MIT",
+  "skills": "skills",
+  "mcpServers": {
+    "matrix-bridge": {
+      "command": "/opt/homebrew/bin/node",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/mcp/server.mjs"
+      ],
+      "env": {
+        "MATRIX_BRIDGE_URL": "http://127.0.0.1:47613"
+      }
+    }
+  },
+  "ui": {
+    "surfaces": [
+      {
+        "id": "matrix-bridge",
+        "title": {
+          "zh-CN": "Matrix Bot",
+          "en-US": "Matrix Bot"
+        },
+        "icon": "bot",
+        "server": "matrix-bridge",
+        "resourceUri": "ui://matrix-bridge/panel.html",
+        "availability": "session"
+      }
+    ]
+  }
+}

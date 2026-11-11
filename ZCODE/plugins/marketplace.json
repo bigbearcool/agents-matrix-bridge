@@ -1,0 +1,19 @@
+{
+  "name": "dev-matrix-bridge-zcode",
+  "plugins": [
+    {
+      "name": "matrix-bridge",
+      "source": "./matrix-bridge",
+      "version": "0.3.0",
+      "description": "Connect ZCode to Matrix as an autonomous 24/7 bot: direct homeserver sync, per-room workspace bindings, thread sub-sessions, admin whitelists, invite/message policies and federation privacy guards.",
+      "displayName": "Matrix Bridge (ZCode)",
+      "displayName_i18n": {
+        "zh-CN": "Matrix 机器人"
+      },
+      "description_i18n": {
+        "zh-CN": "将 ZCode 以原生 Bot 身份 24/7 接入 Matrix：直连 Homeserver 同步、按房间绑定工作区、Thread 独立子会话、管理员白名单、邀请/消息准入与联邦隐私防护；聊天消息调度到无头 zcode 会话。"
+      },
+      "category": "developer-tools"
+    }
+  ]
+}

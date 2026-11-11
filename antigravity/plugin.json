@@ -1,0 +1,15 @@
+{
+  "name": "matrix-bridge",
+  "displayName": "Matrix Bot",
+  "version": "1.0.0",
+  "description": "Connect Antigravity to Matrix as an autonomous bot. Manage Matrix homeserver accounts, joined rooms, per-room reply policies, and workspace bindings.",
+  "logo": "assets/logo.svg",
+  "suggestedPrompts": [
+    "打开 Matrix Bot 配置面板",
+    "查看 Matrix 机器人的连接状态和所在房间",
+    "把当前的 Matrix 房间绑定到指定的开发项目"
+  ],
+  "author": {
+    "name": "Antigravity Pair"
+  }
+}

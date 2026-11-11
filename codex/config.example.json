@@ -1,0 +1,16 @@
+{
+  "homeserver": "https://matrix.example.org",
+  "user_id": "@codex:example.org",
+  "allowed_senders": [
+    "@admin:example.org"
+  ],
+  "direct_rooms": [],
+  "cwd": "/absolute/path/to/workspace",
+  "codex_cmd": "codex",
+  "codex_home": "/absolute/path/to/codex-home",
+  "admins": [
+    "@admin:example.org"
+  ],
+  "group_reply_all": false,
+  "auto_join": false
+}

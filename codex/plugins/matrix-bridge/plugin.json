@@ -1,0 +1,26 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "matrix-bridge",
+  "version": "0.3.0",
+  "description": "Connect a local Codex app-server to Matrix with explicit sender authorization.",
+  "author": {
+    "name": "BigBear"
+  },
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Matrix Bridge (Codex)",
+        "shortDescription": "Codex Matrix bridge",
+        "longDescription": "Open and manage the local Codex Matrix bridge inside Codex.",
+        "developerName": "BigBear",
+        "category": "Engineering",
+        "capabilities": [
+          "Interactive",
+          "Read",
+          "Write"
+        ],
+        "defaultPrompt": "Inspect the Matrix bridge state."
+      }
+    }
+  }
+}

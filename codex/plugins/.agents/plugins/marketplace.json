@@ -1,0 +1,1 @@
+{"name":"bigbear-matrix-codex","interface":{"displayName":"BigBear Matrix Codex"},"plugins":[{"name":"matrix-bridge","source":{"source":"local","path":"./matrix-bridge"},"policy":{"installation":"AVAILABLE","authentication":"ON_INSTALL"},"category":"Engineering"}]}

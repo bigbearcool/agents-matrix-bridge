@@ -1,0 +1,21 @@
+{
+  "name": "matrix-bridge",
+  "version": "0.3.0",
+  "description": "Local Matrix bridge for Codex",
+  "author": {
+    "name": "BigBear"
+  },
+  "interface": {
+    "displayName": "Matrix Bridge (Codex)",
+    "shortDescription": "Codex Matrix bridge",
+    "longDescription": "Open and manage the local Codex Matrix bridge inside Codex.",
+    "developerName": "BigBear",
+    "category": "Engineering",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": "Inspect the Matrix bridge state."
+  }
+}

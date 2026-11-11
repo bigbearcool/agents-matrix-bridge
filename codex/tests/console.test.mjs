@@ -1,0 +1,29 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {mkdtemp,writeFile,readFile} from 'node:fs/promises';import {tmpdir} from 'node:os';import {join} from 'node:path';import {createServer} from 'node:net';import {createConsole} from '../plugins/matrix-bridge/engine/console-server.mjs';
+async function freePort(){const s=createServer();await new Promise(r=>s.listen(0,'127.0.0.1',r));const p=s.address().port;await new Promise(r=>s.close(r));return p;}
+test('console blocks cross-origin writes and keeps credentials out of responses',async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'matrix-console-'));const configPath=join(dir,'config.json');const config={cwd:dir,admins:['@admin:example.org'],allowed_senders:['*'],homeserver:'https://example.org'};await writeFile(configPath,JSON.stringify(config));
+ const bridge={config,state:{rooms:{'!r':{workspace:dir}},settings:{}},running:true,blockedRooms:new Set(),queues:new Map(),save:async()=>{}};const port=await freePort();const server=createConsole(bridge,configPath,port);await new Promise(r=>server.listen(port,'127.0.0.1',r));const origin=`http://127.0.0.1:${port}`;
+ try{const state=await fetch(origin+'/api/config');const data=await state.json();assert.ok(!('access_token' in data));
+ const denied=await fetch(origin+'/api/config',{method:'POST',headers:{'Content-Type':'application/json','Origin':'https://evil.example'},body:JSON.stringify({cwd:'/tmp'})});assert.equal(denied.status,403);
+ const accepted=await fetch(origin+'/api/config',{method:'POST',headers:{'Content-Type':'application/json','Origin':origin},body:JSON.stringify({cwd:'/tmp'})});assert.equal(accepted.status,200);assert.equal(JSON.parse(await readFile(configPath)).cwd,'/tmp');
+ const unknown=await fetch(origin+'/api/config',{method:'POST',headers:{'Content-Type':'application/json','Origin':origin},body:JSON.stringify({access_token:'dummy'})});assert.equal(unknown.status,400);
+ bridge.queues.set('!r',Promise.resolve());const busy=await fetch(origin+'/api/room',{method:'POST',headers:{'Content-Type':'application/json','Origin':origin},body:JSON.stringify({id:'!r',workspace:'/tmp'})});assert.equal(busy.status,400);
+ }finally{await new Promise(r=>server.close(r));}
+});
+test('console verifies account before keeping an in-memory token and does not save it',async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'matrix-auth-'));const configPath=join(dir,'config.json');const config={cwd:dir,admins:['@admin:example.org'],allowed_senders:['*'],homeserver:'https://example.org',user_id:'@bot:example.org'};await writeFile(configPath,JSON.stringify(config));
+ const bridge={config,token:'',state:{rooms:{},settings:{}},running:true,blockedRooms:new Set(),queues:new Map(),save:async()=>{},setPaused:()=>{},fetch:async()=>({ok:true,json:async()=>({user_id:'@bot:example.org'})})};const port=await freePort();const server=createConsole(bridge,configPath,port);await new Promise(r=>server.listen(port,'127.0.0.1',r));const origin=`http://127.0.0.1:${port}`;
+ try{const r=await fetch(origin+'/api/auth',{method:'POST',headers:{'Content-Type':'application/json','Origin':origin},body:JSON.stringify({access_token:'dummy-credential'})});assert.equal(r.status,200);assert.equal(bridge.token,'dummy-credential');assert.ok(!(await readFile(configPath,'utf8')).includes('dummy-credential'));assert.ok(!(await r.text()).includes('dummy-credential'));}finally{await new Promise(r=>server.close(r));}
+});
+test('reconcile requires exact unknown event and only resumes queued events',async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'matrix-reconcile-'));const configPath=join(dir,'config.json');const config={cwd:dir,admins:['@admin:example.org'],allowed_senders:['*']};await writeFile(configPath,JSON.stringify(config));const queued={roomId:'!r',id:'$next',status:'queued'};const unknown={roomId:'!r',id:'$unknown',status:'replying'};const resumed=[];
+ const bridge={config,state:{rooms:{'!r':{}},inbox:[unknown,queued]},running:true,blockedRooms:new Set(['!r']),queues:new Map(),save:async()=>{},enqueue:x=>resumed.push(x.id)};const port=await freePort();const server=createConsole(bridge,configPath,port);await new Promise(r=>server.listen(port,'127.0.0.1',r));const origin=`http://127.0.0.1:${port}`;
+ const post=event_id=>fetch(origin+'/api/reconcile',{method:'POST',headers:{'Content-Type':'application/json','Origin':origin},body:JSON.stringify({id:'!r',event_id})});
+ try{assert.equal((await post('$wrong')).status,400);assert.deepEqual(resumed,[]);assert.equal((await post('$unknown')).status,200);assert.deepEqual(resumed,['$next']);assert.deepEqual(bridge.state.inbox,[queued]);assert.equal(bridge.blockedRooms.size,0);}finally{await new Promise(r=>server.close(r));}
+});
+test('ambiguous migration requires selecting an existing candidate',async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'matrix-migration-ui-'));const configPath=join(dir,'config.json');const config={cwd:dir,admins:['@admin:example.org'],allowed_senders:['*']};await writeFile(configPath,JSON.stringify(config));const queued={roomId:'!r',id:'$next',status:'queued'},resumed=[];
+ const bridge={config,state:{rooms:{'!r':{migration_candidates:[{thread_id:'a',scopes:['room']},{thread_id:'b',scopes:['user']}]}},inbox:[queued]},running:true,blockedRooms:new Set(['!r']),queues:new Map(),save:async()=>{},enqueue:x=>resumed.push(x.id)};const port=await freePort();const server=createConsole(bridge,configPath,port);await new Promise(r=>server.listen(port,'127.0.0.1',r));const origin=`http://127.0.0.1:${port}`;
+ const pick=thread_id=>fetch(origin+'/api/migration',{method:'POST',headers:{'Content-Type':'application/json','Origin':origin},body:JSON.stringify({id:'!r',thread_id})});
+ try{assert.equal((await pick('bad')).status,400);assert.equal((await pick('b')).status,200);assert.equal(bridge.state.rooms['!r'].thread_id,'b');assert.deepEqual(resumed,['$next']);}finally{await new Promise(r=>server.close(r));}
+});
