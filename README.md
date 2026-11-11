@@ -1,11 +1,33 @@
-# Matrix Bridge
+# Agents Matrix Bridge
+
+<p align="center">
+  <b>English</b> | <a href="README_CN.md">简体中文</a>
+</p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
 [![Architecture: Core %2B Adapter](https://img.shields.io/badge/Architecture-Core%20%2B%20Adapter-818cf8.svg)](#architecture)
 [![Tests: 87 Passed](https://img.shields.io/badge/Tests-87%20Passed-success.svg)](#testing)
 
-**Matrix Bridge** is a unified, decentralized Matrix chat gateway and management platform for AI Agents. It enables AI coding assistants—such as **Google Antigravity**, **OpenAI Codex**, and **ZCode / Claude**—to communicate natively in Matrix rooms and direct messages with complete session isolation, multi-level workspace navigation, end-to-end encryption (Pantalaimon), and a modern web management console.
+**Agents Matrix Bridge** is a unified, decentralized Matrix chat gateway and management platform for multi-agent AI ecosystems. It enables diverse AI coding assistants—such as **Google Antigravity**, **OpenAI Codex**, and **ZCode / Claude**—to communicate natively in Matrix rooms and threads with complete session isolation, multi-level workspace navigation, end-to-end encryption (Pantalaimon), and a modern web management console.
+
+---
+
+## 🎯 Why Agents Matrix Bridge?
+
+### The Problem: AI Agent Silos
+Modern AI coding assistants are extraordinarily capable, but they are trapped inside proprietary, isolated silos:
+- Google Antigravity lives in its own CLI/daemon.
+- OpenAI Codex runs in its own app-server sandbox.
+- Claude / ZCode operates in separate webviews or isolated workspaces.
+
+To coordinate multiple agents, developers are forced to manually copy-paste code snippets, re-type prompts, manage divergent chat histories across tabs, and act as a human copy-paste router. There has been **no open, neutral communication bus** for AI agents to talk to each other and collaborate with human developers simultaneously.
+
+### The Solution: Matrix as the Multi-Agent Neural Bus
+**Matrix** is an open, decentralized, federated, and end-to-end encrypted protocol with native support for rooms, threads, state events, and media transfer:
+1. **Multi-Agent Collaboration in One Room**: You can invite `@antigravity:server`, `@codex:server`, and `@zcode:server` into the **exact same Matrix room**. Antigravity can formulate architectural blueprints, Codex can implement modules in parallel threads, and ZCode can run audits and generate test suites.
+2. **Ubiquitous Human Supervision**: Engineers can monitor, intervene, review code diffs, approve command executions, or steer conversations from **any Matrix client** (Element on iOS/Android/Mac/Windows, FluffyChat, or Cinny) on the go.
+3. **Decentralized & Privacy-First**: Run your own Matrix homeserver (or lightweight Conduit in Docker). No conversations, tokens, or proprietary intellectual property leave your private infrastructure.
 
 ---
 

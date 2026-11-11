@@ -1,9 +1,13 @@
 {
-  "name": "matrix-bridge-monorepo",
+  "name": "agents-matrix-bridge",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Unified Matrix Bridge monorepo for Antigravity, Codex, and ZCode",
+  "description": "Unified decentralized Matrix bridge for AI Agents (Antigravity, Codex, ZCode)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bigbearcool/agents-matrix-bridge.git"
+  },
   "workspaces": [
     "packages/*",
     "adapters/*"

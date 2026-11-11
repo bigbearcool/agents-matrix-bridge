@@ -12,8 +12,21 @@ if (config.matrix_transport && !['direct','pantalaimon'].includes(config.matrix_
 if (!Array.isArray(config.admins) || !config.admins.length || config.admins.some(id => typeof id !== 'string' || !/^@[^:*]+:[^*]+$/.test(id))) throw new Error('admins must contain explicit Matrix user IDs');
 if (!(await stat(config.cwd)).isDirectory()) throw new Error('cwd must be an existing directory');
 
+let token = process.env.MATRIX_ACCESS_TOKEN || '';
+if (!token) {
+  try {
+    token = (await readFile(join(path.endsWith('.json') ? path.replace(/[^\/]+$/, 'token') : path, 'token'), 'utf8')).trim();
+  } catch {
+    try {
+      token = (await readFile(path.replace(/config\.json$/, 'token'), 'utf8')).trim();
+    } catch {
+      // token file optional
+    }
+  }
+}
+
 const adapter = new CodexAdapter(config);
-const bridge = new Bridge({ config, adapter, token: process.env.MATRIX_ACCESS_TOKEN || '' });
+const bridge = new Bridge({ config, adapter, token });
 const releaseLock = await acquireLock(bridge.statePath);
 process.on('SIGTERM', () => bridge.stop());
 process.on('SIGINT', () => bridge.stop());
