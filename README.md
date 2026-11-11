@@ -54,6 +54,62 @@ To coordinate multiple agents, developers are forced to manually copy-paste code
 
 ---
 
+## 🧩 Deep Native Plugin Integration & Desktop Visual Configuration
+
+All Agent integrations in this project are **deeply embedded as official, native plugins** according to each platform's architectural standards (never external hacks or fragile screen scrapers). Once installed, developers can manage the bridge directly from their desktop AI assistant's UI with a **full visual configuration panel—zero manual JSON editing required**:
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│               Agent Desktop Visual Management Console (Web Console)         │
+├──────────────────────────────────┬──────────────────────────────────────────┤
+│ 🔌 Connection & Authentication    │ 💬 Rooms & Workspace Governance          │
+│ • Live connection health status  │ • Direct 1-on-1 vs Group Chat overview   │
+│ • 1-Click Homeserver switching   │ • Multi-level directory tree drilldown   │
+│ • User/pass login (token auto)   │ • Independent model & reasoning effort   │
+│ • Pantalaimon E2EE proxy toggle  │ • Instant session memory reset (/new)    │
+├──────────────────────────────────┼──────────────────────────────────────────┤
+│ 🛡️ 4-Layer Security Gate Policies │ 📜 Live Event & Audit Log Stream         │
+│ • Policy dropdown (all/allow/adm)│ • Matrix long-polling sync event ticker  │
+│ • Admin MXID list maintenance    │ • Prompt, tool calls & file uploads log  │
+│ • Automatic egress redaction     │ • Fault detection & state reconciliation │
+└──────────────────────────────────┴──────────────────────────────────────────┘
+```
+
+### 1. Native Plugin Architecture per Agent
+
+| Host Agent | Native Integration Mechanism | Desktop Launch & Interaction |
+| :--- | :--- | :--- |
+| **Google Antigravity** | **Native Sidecar Plugin**<br/>(`plugin.json`, `rules/AGENTS.md`, `skills/matrix-bot`) | Automatically managed alongside the Antigravity process; docked natively in the sidebar/bottom drawer; opens directly with one click. |
+| **OpenAI Codex** | **Official Marketplace + Native MCP App**<br/>(`.codex-plugin/plugin.json`, `mcp.json`, `profile=mcp-app`) | Registered via standard stdio Model Context Protocol (MCP); rendered as an interactive native UI applet embedded directly in the Codex desktop panel. |
+| **ZCode (Claude Desktop)** | **ZCode Native Plugin + LaunchAgent Daemon**<br/>(`.zcode-plugin/plugin.json`, LaunchAgent engine) | 24/7 background persistence via macOS LaunchAgent; toggled with one click from the right-hand ZCode desktop tool tray into the `Matrix Bot` tab. |
+
+### 2. Desktop Visual Configuration Capabilities
+
+Inside each agent's native desktop UI panel, you can configure and monitor all operational parameters visually:
+
+#### 📡 Connection & Authentication Center
+- **Live Connection Dashboard**: Real-time status indicators (Online polling / Reconnecting / Offline), connected Bot User ID, total synced rooms, and network roundtrip latency.
+- **Token-Free Login**: Enter Matrix username and password directly in the UI (an official `AGY-MATRIX-BOT` device token is negotiated on the fly; passwords are never saved to disk).
+- **Pantalaimon E2EE Proxy**: Toggle end-to-end encryption tunneling through local Pantalaimon daemon with one checkbox.
+
+#### 💬 Room Governance & Multi-Level Workspace Binding
+- **Direct vs. Group Chat Distinction**: Immediate identification of 1-on-1 DMs (auto-recognized via `m.direct`, no `@bot` prefix needed) and team collaboration group rooms.
+- **Finder-style Workspace Drill-Down (Workspace Picker)**: Interactive filesystem drawer with parent navigation, breadcrumbs, git repo detection, and fuzzy search; easily bind any Matrix room to a local codebase without typing paths in terminal.
+- **Per-Room Model & Reasoning Effort Tuning**: Override the default model (`gemini-2.5-pro`, `gpt-5-codex`, `claude-3-7-sonnet`) and reasoning budget (`low`, `medium`, `high`) for specific rooms.
+- **Session Reset & Reconciliation**: Clear conversation memory for the active room or thread on demand (equivalent to sending `/new` in chat) and resolve ambiguous historic events.
+
+#### 🛡️ 4-Layer Security Gate Policies
+- **Admission Level Dropdown**: Switch room gate mode in one click—`all` (open), `allowlist` (explicit senders only), `admin` (admins only), or `none` (suspended).
+- **Admin MXID Management**: Maintain authorized user IDs who possess permission to execute critical commands like `/workspace` and `/policy`.
+- **Sender Whitelist Matching**: Manage allowed users with exact Matrix IDs or server-wide wildcards.
+- **Live Secret Redaction Monitoring**: Verify that outgoing logs and messages are actively sanitized of sensitive tokens and private keys.
+
+#### 📜 Live Event & Diagnostic Log Stream
+- Real-time rolling ticker of Matrix sync loops.
+- Comprehensive trace of incoming prompts, model generation events, and generated file uploads.
+
+---
+
 ## 🏗️ Architecture
 
 ```mermaid

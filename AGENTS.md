@@ -67,6 +67,10 @@ Whenever you edit or extend this codebase, you **MUST** adhere to the following 
 - **Layer 4: Secret Redaction**: Strip tokens (`syt_`, `sk-`, `ghp_`, private keys) before messages are stored or forwarded.
 - **Rule**: Tokens must NEVER be persisted in plaintext `config.json` files or passed to agent subprocesses.
 
+### 5. Native Plugin Embedding & Visual Configuration
+- All Agent integrations must be packaged as **native plugins or extensions** matching the host platform's official extension architecture (Antigravity Sidecar, Codex MCP App, ZCode Marketplace Plugin).
+- **Zero-Manual-JSON-Editing**: Ensure all operational settings (Homeserver, credentials, room bindings, workspace directory drilldown, model selection, reasoning budget, and admission policies) are fully configurable through the embedded desktop Web Console.
+
 ---
 
 ## 3. Common Development Commands
