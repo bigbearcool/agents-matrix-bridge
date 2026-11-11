@@ -9,21 +9,27 @@ import {
   ADAPTER_NAMES,
   AntigravityAdapter,
   CodexAdapter,
+  ClaudeAdapter,
+  DshAdapter,
   ZCodeAdapter
 } from '../index.mjs';
 import { scanGeneratedFiles as scanCodex } from '../codex/index.mjs';
 import { scanGeneratedFiles as scanAgy } from '../antigravity/index.mjs';
 import { scanGeneratedFiles as scanZcode } from '../zcode/index.mjs';
+import { scanGeneratedFiles as scanClaude } from '../claude/index.mjs';
+import { scanGeneratedFiles as scanDsh } from '../dsh/index.mjs';
 import { fixture, workspace } from './helpers.mjs';
 
 const CASES = [
   { name: 'codex', Ctor: CodexAdapter, fixture: 'fake-codex.mjs' },
   { name: 'antigravity', Ctor: AntigravityAdapter, fixture: 'fake-agy.mjs' },
-  { name: 'zcode', Ctor: ZCodeAdapter, fixture: 'fake-zcode.mjs' }
+  { name: 'zcode', Ctor: ZCodeAdapter, fixture: 'fake-zcode.mjs' },
+  { name: 'claude', Ctor: ClaudeAdapter, fixture: 'fake-claude.mjs' },
+  { name: 'dsh', Ctor: DshAdapter, fixture: 'fake-dsh.mjs' }
 ];
 
 test('all adapters extend AgentRuntimeAdapter and expose the contract', async (t) => {
-  assert.deepEqual(ADAPTER_NAMES, ['codex', 'antigravity', 'zcode']);
+  assert.deepEqual(ADAPTER_NAMES, ['codex', 'antigravity', 'zcode', 'claude', 'dsh']);
   for (const entry of CASES) {
     const cliPath = fixture(entry.fixture);
     const adapter = new entry.Ctor({ defaultCliPath: cliPath });
@@ -115,7 +121,7 @@ test('generated file scanning resolves relative paths and skips missing files', 
   mkdirSync(`${cwd}/reports`, { recursive: true });
   writeFileSync(`${cwd}/${relative}`, 'ok');
 
-  for (const scan of [scanCodex, scanAgy, scanZcode]) {
+  for (const scan of [scanCodex, scanAgy, scanZcode, scanClaude, scanDsh]) {
     const files = scan(
       `![chart](${relative})\n<send-file path="missing.txt" />\n[SEND_FILE: /nope]`,
       cwd

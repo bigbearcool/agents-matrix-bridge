@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Matrix 桥接网关",
+    "description": "把 DeepSeek Harness 接入 Matrix 房间，支持在 Element 等客户端与 DSH 会话"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "matrix-bridge",
+  "version": "1.0.0",
+  "description": "Matrix bridge for Claude: chat with Claude from Matrix encrypted/clear rooms and manage bindings.",
+  "author": {
+    "name": "BigBear"
+  },
+  "keywords": [
+    "matrix",
+    "bridge",
+    "claude"
+  ]
+}

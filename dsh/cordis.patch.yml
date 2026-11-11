@@ -1,0 +1,26 @@
+# DeepSeek Harness desktop profile layer for the Matrix bridge.
+#
+# Install with:
+#
+#   dsh plugin --profile desktop add /path/to/agents-matrix-bridge/dsh
+#
+# Because package.json declares `dsh.bundle.patch`, the plugin manager appends
+# this file to the profile's ordered bundle list. The row below mounts on the
+# host plane, where it starts the Matrix bridge and its management console at
+# http://127.0.0.1:47616/.
+#
+# Operational settings live in ~/.dsh/matrix-bridge/config.json and are edited
+# from the console (homeserver, credentials, room bindings, workspace, models,
+# admission policy). Values set under `config:` here override that file, so an
+# empty object keeps the console in charge:
+#
+#   - insert:
+#       - id: dsh-matrix-bridge
+#         name: "dsh-matrix-bridge"
+#         config:
+#           console_port: 47616
+#           cwd: /Users/me/projects
+- insert:
+    - id: dsh-matrix-bridge
+      name: "dsh-matrix-bridge"
+      config: {}

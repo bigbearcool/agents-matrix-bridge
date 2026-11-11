@@ -250,6 +250,9 @@ export function createConsole(coreEngine, configPath, port, options = {}) {
     if (who.user_id !== bridge.config.user_id) throw new Error('账号与配置不一致');
     bridge.token = token;
     bridge.setPaused?.(false);
+    if (!bridge.running) {
+      bridge.run().catch(() => {});
+    }
     return { user_id: who.user_id, device_id: who.device_id || '' };
   }
 

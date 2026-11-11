@@ -1,0 +1,32 @@
+{
+  "name": "dsh-matrix-bridge",
+  "version": "1.0.0",
+  "description": "Matrix bridge plugin for DeepSeek Harness Desktop: chat with the DSH agent from Matrix rooms and manage it from a local console.",
+  "type": "module",
+  "main": "./engine/index.mjs",
+  "exports": {
+    ".": "./engine/index.mjs",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "engine",
+    "cordis.patch.yml",
+    "locale"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "plugin",
+    "matrix",
+    "bridge"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}

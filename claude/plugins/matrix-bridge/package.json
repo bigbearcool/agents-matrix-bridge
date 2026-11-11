@@ -1,0 +1,7 @@
+{
+  "name": "matrix-bridge",
+  "version": "1.0.0",
+  "description": "Matrix bridge for Claude Code and Claude Desktop",
+  "type": "module",
+  "license": "MIT"
+}

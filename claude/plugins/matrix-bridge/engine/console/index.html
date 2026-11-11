@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-agent="generic">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Matrix Bridge 控制台</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <!-- 顶部统一状态头 -->
+    <header class="top-header">
+      <div class="brand-group">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+            <path d="M.632.55v22.9h2.28v-1.63H2.262V2.18h.65V.55zm22.736 0v1.63h.65v19.64h-.65V23.45h2.28V.55zm-15.65 6.78v1.73h.03c.3-.57.75-1.02 1.34-1.34.59-.32 1.25-.49 1.99-.49.77 0 1.48.18 2.12.55.65.36 1.13.9 1.45 1.62.33-.72.82-1.26 1.47-1.62.65-.37 1.39-.55 2.21-.55.67 0 1.29.11 1.86.32.57.22 1.05.52 1.44.92.39.4.68.9.89 1.49.2.59.3 1.29.3 2.1v6.92h-2.58v-6.38c0-.62-.05-1.12-.16-1.5-.11-.38-.28-.68-.52-.9-.23-.22-.52-.37-.87-.46-.35-.09-.76-.14-1.23-.14-.52 0-.96.07-1.33.22-.37.15-.67.36-.89.64-.22.28-.38.61-.48 1-.09.39-.14.83-.14 1.34v6.18h-2.58v-6.42c0-.57-.06-1.04-.17-1.42-.12-.38-.29-.68-.53-.91-.24-.22-.53-.38-.88-.47-.35-.1-.76-.14-1.22-.14-.49 0-.93.07-1.31.21-.38.14-.69.35-.92.62-.23.27-.4.6-.5 1-.1.39-.15.84-.15 1.35v6.16H7.718V7.33z"/>
+          </svg>
+        </div>
+        <div class="brand-meta">
+          <div class="brand-name-row">
+            <h1 class="brand-name" id="brandName">Matrix Bridge 控制台</h1>
+            <span class="agent-badge" id="agentBadge" title="自动感知当前运行 Agent">
+              <span class="agent-badge-dot" id="agentBadgeDot"></span>
+              <span id="agentBadgeLabel">Agent</span>
+            </span>
+            <span class="state-pill offline" id="statePill">
+              <span class="state-dot"></span>
+              <span id="stateLabel">未配置</span>
+            </span>
+          </div>
+          <div class="brand-sub" id="headerSub">统一控制台 · 完成账号登录即可接入 Matrix 房间</div>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <button type="button" class="btn btn-sm btn-outline hidden" id="btnToggleSync">暂停</button>
+      </div>
+    </header>
+
+    <!-- 全局错误横幅 -->
+    <div class="alert-banner hidden" id="errorBanner">
+      <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" class="alert-icon">
+        <path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zM7.25 4.75h1.5v4h-1.5v-4zm0 5.25h1.5v1.5h-1.5V10z"/>
+      </svg>
+      <span id="errorBannerText">连接异常</span>
+    </div>
+
+    <!-- 主导航栏 (4 个精炼页签) -->
+    <nav class="nav-tabs" role="tablist">
+      <button type="button" class="nav-tab active" data-tab="view-rooms" id="navTabRooms">
+        <span>房间</span>
+        <span class="nav-count" id="roomCountBadge">0</span>
+      </button>
+      <button type="button" class="nav-tab" data-tab="view-security" id="navTabSecurity">
+        <span>安全准入</span>
+      </button>
+      <button type="button" class="nav-tab" data-tab="view-settings" id="navTabSettings">
+        <span>账号与模型</span>
+      </button>
+      <button type="button" class="nav-tab" data-tab="view-activity" id="navTabActivity">
+        <span>动态</span>
+      </button>
+    </nav>
+
+    <!-- ==================== 视图 1：房间与多级工作区 ==================== -->
+    <main class="view-pane active" id="view-rooms">
+      <div class="rooms-toolbar">
+        <div class="search-wrap">
+          <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" class="search-icon">
+            <circle cx="7" cy="7" r="4.5"></circle>
+            <path d="M10.5 10.5L14 14" stroke-linecap="round"></path>
+          </svg>
+          <input type="text" class="search-input" id="roomSearchInput" placeholder="搜索房间名称或绑定项目...">
+        </div>
+        <button type="button" class="icon-btn" id="btnRefreshRooms" title="刷新房间列表">
+          <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M13.5 8a5.5 5.5 0 1 1-1.35-3.6" stroke-linecap="round"></path>
+            <path d="M13.5 2.5v2.5H11" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="filter-bar" id="roomFilterBar">
+        <button type="button" class="filter-chip active" data-filter="all">全部</button>
+        <button type="button" class="filter-chip" data-filter="group">群聊</button>
+        <button type="button" class="filter-chip" data-filter="dm">私聊</button>
+        <button type="button" class="filter-chip" data-filter="bound">已绑定目录</button>
+      </div>
+
+      <div class="rooms-list" id="roomsContainer"></div>
+    </main>
+
+    <!-- ==================== 视图 2：安全准入与联邦防护 ==================== -->
+    <main class="view-pane" id="view-security">
+      <!-- 1. 管理员账号白名单 -->
+      <section class="panel-card">
+        <div class="card-head">
+          <div>
+            <h2 class="card-heading">管理员账号</h2>
+            <p class="card-desc">管理员拥有指令权限（私聊直接发送；群聊需 @本机器人 触发，避免与群内其他 Bot 冲突）</p>
+          </div>
+          <span class="mini-badge" id="adminCountTag">0 人</span>
+        </div>
+
+        <div class="mxid-editor" data-list-key="admins">
+          <div class="mxid-chips" id="chipsAdmins"></div>
+          <div class="mxid-add-row">
+            <input type="text" class="text-input mono" id="inputAddAdmin" placeholder="输入 @user:server 或用户名（支持逗号批量添加）">
+            <button type="button" class="btn btn-sm btn-primary" id="btnAddAdmin">添加</button>
+          </div>
+          <div class="peer-suggestions" id="suggestAdmins"></div>
+        </div>
+      </section>
+
+      <!-- 2. 自动接受房间邀请策略 -->
+      <section class="panel-card">
+        <div class="card-head">
+          <div>
+            <h2 class="card-heading">房间邀请准入策略</h2>
+            <p class="card-desc">控制收到新私聊或群聊邀请时的自动入群行为，防止开放联邦后被外服随意拉群</p>
+          </div>
+        </div>
+
+        <div class="policy-grid cols-2" id="invitePolicyGroup">
+          <button type="button" class="policy-option active" data-invite-pol="all">
+            <span class="policy-option-title">所有人</span>
+            <span class="policy-option-desc">自动接受所有邀请</span>
+          </button>
+          <button type="button" class="policy-option" data-invite-pol="local_server">
+            <span class="policy-option-title">仅本服务器用户</span>
+            <span class="policy-option-desc" id="inviteLocalDomainDesc">仅接受本服账号邀请</span>
+          </button>
+          <button type="button" class="policy-option" data-invite-pol="allowlist">
+            <span class="policy-option-title">白名单</span>
+            <span class="policy-option-desc">仅接受名单与管理员邀请</span>
+          </button>
+          <button type="button" class="policy-option danger-opt" data-invite-pol="none">
+            <span class="policy-option-title">拒绝所有邀请</span>
+            <span class="policy-option-desc">自动婉拒所有新邀请</span>
+          </button>
+        </div>
+
+        <div class="conditional-box hidden" id="boxInviteAllowlist">
+          <div class="label-split">
+            <span class="field-label">允许邀请的白名单账号 / 域名</span>
+            <span class="field-hint">支持 @user:server 或 @*:domain.com 整服放行</span>
+          </div>
+          <div class="mxid-chips" id="chipsInviteAllow"></div>
+          <div class="mxid-add-row">
+            <input type="text" class="text-input mono" id="inputAddInviteAllow" placeholder="输入 @user:server 或 @*:trusted.org">
+            <button type="button" class="btn btn-sm btn-subtle" id="btnAddInviteAllow">添加</button>
+          </div>
+          <div class="peer-suggestions" id="suggestInviteAllow"></div>
+        </div>
+      </section>
+
+      <!-- 3. 接收消息过滤名单 -->
+      <section class="panel-card">
+        <div class="card-head">
+          <div>
+            <h2 class="card-heading">接收消息名单配置</h2>
+            <p class="card-desc">按发送者身份过滤可触发对话的 Matrix 账号（管理员始终放行）</p>
+          </div>
+        </div>
+
+        <div class="policy-grid cols-2" id="messagePolicyGroup">
+          <button type="button" class="policy-option active" data-msg-pol="all">
+            <span class="policy-option-title">所有人</span>
+            <span class="policy-option-desc">接收所有成员消息</span>
+          </button>
+          <button type="button" class="policy-option" data-msg-pol="local_server">
+            <span class="policy-option-title">仅本服务器用户</span>
+            <span class="policy-option-desc" id="msgLocalDomainDesc">拦截外服联邦用户对话</span>
+          </button>
+          <button type="button" class="policy-option" data-msg-pol="allowlist">
+            <span class="policy-option-title">白名单</span>
+            <span class="policy-option-desc">仅响应白名单与管理员</span>
+          </button>
+          <button type="button" class="policy-option" data-msg-pol="blocklist">
+            <span class="policy-option-title">黑名单</span>
+            <span class="policy-option-desc">拦截黑名单账号或外服</span>
+          </button>
+          <button type="button" class="policy-option danger-opt span-2" data-msg-pol="none">
+            <span class="policy-option-title">拒绝所有消息</span>
+            <span class="policy-option-desc">暂停所有普通对话响应（仅保留管理员命令通道）</span>
+          </button>
+        </div>
+
+        <!-- 白名单子面板 -->
+        <div class="conditional-box hidden" id="boxMessageAllowlist">
+          <div class="label-split">
+            <span class="field-label">接收消息白名单</span>
+            <span class="field-hint">支持 @user:server 或 @*:trusted.org</span>
+          </div>
+          <div class="mxid-chips" id="chipsMsgAllow"></div>
+          <div class="mxid-add-row">
+            <input type="text" class="text-input mono" id="inputAddMsgAllow" placeholder="输入允许对话的 @user:server 或 @*:domain">
+            <button type="button" class="btn btn-sm btn-subtle" id="btnAddMsgAllow">添加</button>
+          </div>
+          <div class="peer-suggestions" id="suggestMsgAllow"></div>
+        </div>
+
+        <!-- 黑名单子面板 -->
+        <div class="conditional-box hidden" id="boxMessageBlocklist">
+          <div class="label-split">
+            <span class="field-label">接收消息黑名单</span>
+            <span class="field-hint">支持 @user:server 或 @*:matrix.org 整服屏蔽</span>
+          </div>
+          <div class="mxid-chips dark-danger" id="chipsMsgBlock"></div>
+          <div class="mxid-add-row">
+            <input type="text" class="text-input mono" id="inputAddMsgBlock" placeholder="输入要屏蔽的 @user:server 或 @*:evil.org">
+            <button type="button" class="btn btn-sm btn-subtle" id="btnAddMsgBlock">屏蔽</button>
+          </div>
+          <div class="peer-suggestions" id="suggestMsgBlock"></div>
+        </div>
+      </section>
+
+      <!-- 4. 联邦与隐私纵深防护 -->
+      <section class="panel-card">
+        <div class="card-head">
+          <div>
+            <h2 class="card-heading">联邦与隐私纵深防护</h2>
+            <p class="card-desc">防御开放 Matrix 联邦后的跨服旁听窃密、未授权宿主目录探测与敏感凭据外泄</p>
+          </div>
+          <span class="mini-badge">纵深防御</span>
+        </div>
+
+        <div class="security-switches">
+          <div class="setting-row">
+            <div class="setting-meta">
+              <div class="setting-title">拦截含外服成员的群聊 (防联邦旁听)</div>
+              <div class="setting-sub">群内有外部联邦服务器成员或属外服房间时自动静默，防止本服成员提问导致代码同步至外服</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="toggleFedRoomGuard" checked>
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="setting-row">
+            <div class="setting-meta">
+              <div class="setting-title">未绑定目录房间强制沙箱隔离</div>
+              <div class="setting-sub">未经管理员显式绑定项目的房间一律在独立空沙箱运行，禁止回退访问本地主目录</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="toggleIsolateUnbound" checked>
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="setting-row">
+            <div class="setting-meta">
+              <div class="setting-title">仅管理员可触发本地工作区执行</div>
+              <div class="setting-sub">开启后，即使在已绑定项目的群聊中，普通群成员也无法触发 Agent 读写代码或执行命令</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="toggleAdminOnlyWs">
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="setting-row">
+            <div class="setting-meta">
+              <div class="setting-title">出站消息本机路径与密钥自动脱敏</div>
+              <div class="setting-sub">发往 Matrix 前自动将本机主目录路径替换为 ~，并抹除疑似 Token / API Key / 私钥块</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="toggleRedactSensitive" checked>
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="setting-row">
+            <div class="setting-meta">
+              <div class="setting-title">非管理员防洪限流与超长载荷拦截</div>
+              <div class="setting-sub">限制非管理员每分钟最多 6 次请求并拦截超 12,000 字异常消息，防联邦脚本刷屏</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="toggleRateLimit" checked>
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ==================== 视图 3：账号与模型 ==================== -->
+    <main class="view-pane" id="view-settings">
+      <!-- 已绑定账号概览卡 -->
+      <section class="panel-card" id="accountSummaryCard">
+        <div class="account-row">
+          <div class="account-avatar" id="accountAvatar">M</div>
+          <div class="account-details">
+            <div class="account-uid" id="accountUserId">@bot:matrix.example.org</div>
+            <div class="account-server" id="accountServer">http://127.0.0.1:8008</div>
+          </div>
+        </div>
+        <div class="account-actions">
+          <button type="button" class="btn btn-sm btn-subtle" id="btnSwitchAccount">更换账号</button>
+          <button type="button" class="btn btn-sm btn-danger-ghost" id="btnLogoutAccount">退出解绑</button>
+        </div>
+      </section>
+
+      <!-- 登录 / 接入表单卡 -->
+      <section class="panel-card hidden" id="authFormCard">
+        <form id="auth-form">
+        <div class="card-head">
+          <div>
+            <h2 class="card-heading">接入 Matrix 机器人账号</h2>
+            <p class="card-desc">直连 Matrix Homeserver，自动同步私聊与群聊房间</p>
+          </div>
+          <button type="button" class="btn btn-xs btn-ghost hidden" id="btnCancelEditAuth">收起</button>
+        </div>
+
+        <div class="form-field">
+          <label class="field-label" for="inputHomeserver">服务器地址 (Homeserver)</label>
+          <input type="text" class="text-input mono" id="inputHomeserver" placeholder="http://192.168.124.203:18010" autocomplete="off">
+        </div>
+
+        <div class="mode-switch" role="tablist">
+          <button type="button" class="mode-btn active" data-auth-mode="password">账号密码登录</button>
+          <button type="button" class="mode-btn" data-auth-mode="token">Access Token 直连</button>
+        </div>
+
+        <div class="auth-mode-pane" id="authPanePassword">
+          <div class="form-field">
+            <label class="field-label" for="inputUsername">Bot 用户名</label>
+            <input type="text" class="text-input" id="inputUsername" placeholder="如 my-bot 或 @my-bot:server" autocomplete="username">
+          </div>
+          <div class="form-field">
+            <label class="field-label" for="inputPassword">登录密码</label>
+            <div class="input-with-action">
+              <input type="password" class="text-input" id="inputPassword" placeholder="输入密码以签发专属设备凭证" autocomplete="current-password">
+              <button type="button" class="peek-btn" data-peek="inputPassword" title="显示/隐藏密码">显示</button>
+            </div>
+            <span class="field-hint">密码仅用于向服务器换取设备 Token，不会明文落盘保存</span>
+          </div>
+          <button type="button" class="btn btn-primary btn-full" id="btnSubmitLogin">登录并启动连接</button>
+        </div>
+
+        <div class="auth-mode-pane hidden" id="authPaneToken">
+          <div class="form-field">
+            <label class="field-label" for="inputAccessToken">Access Token</label>
+            <div class="input-with-action">
+              <input type="password" class="text-input mono" id="inputAccessToken" placeholder="syt_..." autocomplete="off">
+              <button type="button" class="peek-btn" data-peek="inputAccessToken" title="显示/隐藏 Token">显示</button>
+            </div>
+            <span class="field-hint">将自动调用 /whoami 校验凭证有效性并识别 Bot 身份</span>
+          </div>
+          <button type="button" class="btn btn-primary btn-full" id="btnSubmitToken">验证 Token 并启动</button>
+        </div>
+        </form>
+      </section>
+
+      <!-- 全局默认模型与思考深度 -->
+      <section class="panel-card">
+        <div class="card-head">
+          <div>
+            <h2 class="card-heading">默认模型与思考深度</h2>
+            <p class="card-desc">全局默认配置；管理员也可在房间内用 /model 与 /effort 按房间单独切换</p>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label class="field-label" for="selectDefaultModel">默认对话模型</label>
+          <select class="select-input" id="selectDefaultModel">
+            <option value="">跟随系统 / CLI 默认设置</option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label class="field-label">默认思考深度 (Reasoning Effort)</label>
+          <div class="seg-pills full-seg" id="globalEffortGroup">
+            <button type="button" class="seg-pill active" data-effort="">默认</button>
+            <button type="button" class="seg-pill" data-effort="low">Low</button>
+            <button type="button" class="seg-pill" data-effort="medium">Medium</button>
+            <button type="button" class="seg-pill" data-effort="high">High</button>
+            <button type="button" class="seg-pill" data-effort="xhigh">XHigh</button>
+            <button type="button" class="seg-pill" data-effort="max">Max</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 全局群聊规则与项目目录 -->
+      <section class="panel-card">
+        <div class="card-head">
+          <div>
+            <h2 class="card-heading">群聊默认策略与项目路径</h2>
+            <p class="card-desc">群聊自动附带发言人署名，支持 Matrix Thread 独立子会话</p>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label class="field-label">新群聊默认触发方式</label>
+          <div class="policy-grid cols-3" id="globalPolicyGroup">
+            <button type="button" class="policy-option active" data-policy="mention">
+              <span class="policy-option-title">仅 @提及</span>
+              <span class="policy-option-desc">被 @ 时才回复</span>
+            </button>
+            <button type="button" class="policy-option" data-policy="all">
+              <span class="policy-option-title">全部回复</span>
+              <span class="policy-option-desc">响应群内所有消息</span>
+            </button>
+            <button type="button" class="policy-option" data-policy="mute">
+              <span class="policy-option-title">默认静音</span>
+              <span class="policy-option-desc">仅处理管理指令</span>
+            </button>
+          </div>
+          <span class="field-hint">1 对 1 私聊默认直接回复；可在「房间」页签按房间独立覆盖</span>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="form-field">
+          <div class="label-split">
+            <label class="field-label" for="inputBaseDir">本地默认项目根目录</label>
+            <span class="label-meta" id="projectCountMeta">支持多级子目录浏览</span>
+          </div>
+          <div class="inline-save-row">
+            <input type="text" class="text-input mono" id="inputBaseDir" placeholder="/Users/xiangyu/开发项目">
+            <button type="button" class="btn btn-sm btn-subtle" id="btnSaveBaseDir">保存</button>
+          </div>
+        </div>
+
+        <details class="advanced-fold">
+          <summary>高级环境配置</summary>
+          <div class="advanced-body">
+            <div class="form-field">
+              <label class="field-label" for="inputAgentCliCmd">Agent CLI 执行路径</label>
+              <div class="inline-save-row">
+                <input type="text" class="text-input mono" id="inputAgentCliCmd" data-alias-ids="inputCodexCmd inputAgyCmd inputZcodeCmd" placeholder="codex / agy / zcode，留空则使用 PATH 中的默认命令">
+                <button type="button" class="btn btn-sm btn-subtle" id="btnSaveAgentCliCmd" data-alias-ids="btnSaveCodexCmd btnSaveAgyCmd btnSaveZcodeCmd">保存</button>
+              </div>
+              <span class="field-hint">统一适配 Antigravity / Codex / ZCode，保存时自动写入当前 Agent 对应的配置键</span>
+            </div>
+          </div>
+        </details>
+      </section>
+    </main>
+
+    <!-- ==================== 视图 4：运行动态 ==================== -->
+    <main class="view-pane" id="view-activity">
+      <section class="panel-card">
+        <div class="card-head">
+          <div>
+            <h2 class="card-heading">管理员聊天指令速查</h2>
+            <p class="card-desc">私聊直接发送（无需 @）；群聊需先 @机器人 再接指令（避免与群内其他 Bot 冲突），点击即可复制</p>
+          </div>
+        </div>
+        <div class="cmd-grid">
+          <button type="button" class="cmd-item" data-copy-cmd="/workspace list">
+            <code class="cmd-code">/workspace list [子目录]</code>
+            <span class="cmd-desc">浏览多级工作目录</span>
+          </button>
+          <button type="button" class="cmd-item" data-copy-cmd="/workspace bind ">
+            <code class="cmd-code">/workspace bind &lt;多级路径&gt;</code>
+            <span class="cmd-desc">绑定任意层级目录</span>
+          </button>
+          <button type="button" class="cmd-item" data-copy-cmd="/model">
+            <code class="cmd-code">/model [list | &lt;序号/ID&gt;]</code>
+            <span class="cmd-desc">查看或切换房间模型</span>
+          </button>
+          <button type="button" class="cmd-item" data-copy-cmd="/effort high">
+            <code class="cmd-code">/effort low|medium|high|max</code>
+            <span class="cmd-desc">设置思考深度 (/thinking)</span>
+          </button>
+          <button type="button" class="cmd-item" data-copy-cmd="/policy mention">
+            <code class="cmd-code">/policy mention|all|mute</code>
+            <span class="cmd-desc">切换房间触发规则</span>
+          </button>
+          <button type="button" class="cmd-item" data-copy-cmd="/status">
+            <code class="cmd-code">/status</code>
+            <span class="cmd-desc">查看房间与安全状态</span>
+          </button>
+          <button type="button" class="cmd-item" data-copy-cmd="/sendfile ">
+            <code class="cmd-code">/sendfile &lt;文件路径&gt;</code>
+            <span class="cmd-desc">向房间发送本地媒体/附件</span>
+          </button>
+          <button type="button" class="cmd-item" data-copy-cmd="/new">
+            <code class="cmd-code">/new</code>
+            <span class="cmd-desc">重置当前房间/线程上下文</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="panel-card log-section">
+        <div class="log-toolbar">
+          <div class="filter-bar compact" id="logFilterBar">
+            <button type="button" class="filter-chip active" data-log-filter="all">全部</button>
+            <button type="button" class="filter-chip" data-log-filter="msg">消息</button>
+            <button type="button" class="filter-chip" data-log-filter="sec">安全准入</button>
+            <button type="button" class="filter-chip" data-log-filter="error">异常</button>
+          </div>
+          <button type="button" class="btn btn-xs btn-ghost" id="btnClearLogs">清空</button>
+        </div>
+
+        <div class="log-stream" id="logStream">
+          <div class="log-empty">等待运行事件...</div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast-stack" id="toastStack"></div>
+
+  <p id="error" class="hidden" role="alert"></p>
+  <script src="/panel-adapter.js"></script>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

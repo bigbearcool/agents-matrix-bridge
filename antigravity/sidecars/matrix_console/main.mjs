@@ -10,6 +10,14 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const CONFIG_PATH = join(homedir(), '.gemini', 'config', 'plugins', 'matrix-bridge', 'config.json');
 const ALT_CONFIG_PATH = join(homedir(), '.gemini', 'matrix-bot', 'config.json');
 
+// Token lives in a separate 0600 file, never in config.json (AGENTS.md invariant 4).
+// MATRIX_ACCESS_TOKEN env var remains as an explicit override.
+function readToken(path) {
+  if (process.env.MATRIX_ACCESS_TOKEN) return process.env.MATRIX_ACCESS_TOKEN;
+  try { return readFileSync(path, 'utf-8').trim(); } catch { return ''; }
+}
+const TOKEN_PATH = join(homedir(), '.gemini', 'antigravity', 'plugin_data', 'matrix-bridge', 'token');
+
 const configPath = existsSync(CONFIG_PATH) ? CONFIG_PATH : ALT_CONFIG_PATH;
 const config = existsSync(configPath) ? JSON.parse(readFileSync(configPath, 'utf-8')) : {
   homeserver: 'https://matrix.bigbear.cool:8443',
@@ -28,7 +36,7 @@ const adapter = new AntigravityAdapter({
 const bridge = new Bridge({
   config,
   adapter,
-  token: config.access_token || process.env.MATRIX_ACCESS_TOKEN || ''
+  token: readToken(TOKEN_PATH)
 });
 
 const port = Number(process.env.ANTIGRAVITY_SIDECAR_WEB_PORT || config.console_port || 47612);

@@ -10,6 +10,14 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const STABLE_DIR = join(homedir(), '.zcode', 'matrix-bridge');
 const CONFIG_PATH = join(STABLE_DIR, 'config.json');
 
+// Token lives in a separate 0600 file, never in config.json (AGENTS.md invariant 4).
+// MATRIX_ACCESS_TOKEN env var remains as an explicit override.
+function readToken(path) {
+  if (process.env.MATRIX_ACCESS_TOKEN) return process.env.MATRIX_ACCESS_TOKEN;
+  try { return readFileSync(path, 'utf-8').trim(); } catch { return ''; }
+}
+const TOKEN_PATH = join(STABLE_DIR, 'token');
+
 const config = existsSync(CONFIG_PATH) ? JSON.parse(readFileSync(CONFIG_PATH, 'utf-8')) : {
   homeserver: 'https://matrix.bigbear.cool:8443',
   user_id: '@bot:matrix.bigbear.cool',
@@ -27,7 +35,7 @@ const adapter = new ZCodeAdapter({
 const bridge = new Bridge({
   config,
   adapter,
-  token: config.access_token || process.env.MATRIX_ACCESS_TOKEN || ''
+  token: readToken(TOKEN_PATH)
 });
 
 const port = Number(config.console_port || 47613);

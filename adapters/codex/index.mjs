@@ -150,7 +150,9 @@ export class CodexAdapter extends AgentRuntimeAdapter {
     this.cliPath = cliPath;
     this.options = options;
     this.env = options.env || cleanEnvironment();
-    if (options.codexHome && !this.env.CODEX_HOME) this.env = { ...this.env, CODEX_HOME: options.codexHome };
+    // config.json uses snake_case (codex_home); accept both spellings so existing sessions stay reachable.
+    const codexHome = options.codexHome || options.codex_home;
+    if (codexHome && !this.env.CODEX_HOME) this.env = { ...this.env, CODEX_HOME: codexHome };
     this.clientOptions = {
       command: cliPath,
       appServerArgs: options.appServerArgs,

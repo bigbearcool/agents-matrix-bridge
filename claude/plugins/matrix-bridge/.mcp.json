@@ -1,0 +1,11 @@
+{
+  "matrix-bridge": {
+    "command": "node",
+    "args": [
+      "${CLAUDE_PLUGIN_ROOT}/mcp/server.mjs"
+    ],
+    "env": {
+      "MATRIX_BRIDGE_URL": "http://127.0.0.1:47615"
+    }
+  }
+}

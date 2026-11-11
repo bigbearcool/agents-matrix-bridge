@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Matrix Bridge",
+    "description": "Connects DeepSeek Harness to Matrix rooms for chatting via Element and other Matrix clients."
+  }
+}

@@ -37,6 +37,16 @@ const uiTargets = [
     name: 'ZCode Console',
     dest: join(ROOT, 'ZCODE', 'plugins', 'matrix-bridge', 'engine', 'console'),
     files: ['index.html', 'styles.css', 'app.js']
+  },
+  {
+    name: 'Claude Console',
+    dest: join(ROOT, 'claude', 'plugins', 'matrix-bridge', 'engine', 'console'),
+    files: ['index.html', 'styles.css', 'app.js']
+  },
+  {
+    name: 'DSH Console',
+    dest: join(ROOT, 'dsh', 'engine', 'console'),
+    files: ['index.html', 'styles.css', 'app.js']
   }
 ];
 
@@ -72,6 +82,16 @@ const hostTargets = [
     name: 'ZCode Engine',
     dir: join(ROOT, 'ZCODE', 'plugins', 'matrix-bridge', 'engine'),
     adapterSrc: join(ROOT, 'adapters', 'zcode', 'index.mjs')
+  },
+  {
+    name: 'Claude Engine',
+    dir: join(ROOT, 'claude', 'plugins', 'matrix-bridge', 'engine'),
+    adapterSrc: join(ROOT, 'adapters', 'claude', 'index.mjs')
+  },
+  {
+    name: 'DSH Engine',
+    dir: join(ROOT, 'dsh', 'engine'),
+    adapterSrc: join(ROOT, 'adapters', 'dsh', 'index.mjs')
   }
 ];
 

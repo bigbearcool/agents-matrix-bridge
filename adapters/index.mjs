@@ -12,16 +12,20 @@ import { assertAgentRuntimeAdapter } from '../packages/matrix-core/src/adapter.m
 import { CodexAdapter } from './codex/index.mjs';
 import { AntigravityAdapter } from './antigravity/index.mjs';
 import { ZCodeAdapter } from './zcode/index.mjs';
+import { ClaudeAdapter } from './claude/index.mjs';
+import { DshAdapter } from './dsh/index.mjs';
 
-export { CodexAdapter, AntigravityAdapter, ZCodeAdapter };
+export { CodexAdapter, AntigravityAdapter, ZCodeAdapter, ClaudeAdapter, DshAdapter };
 export { CodexClient, CodexAppServerClient } from './codex/client.mjs';
 
-export const ADAPTER_NAMES = Object.freeze(['codex', 'antigravity', 'zcode']);
+export const ADAPTER_NAMES = Object.freeze(['codex', 'antigravity', 'zcode', 'claude', 'dsh']);
 
 export const ADAPTERS = Object.freeze({
   codex: CodexAdapter,
   antigravity: AntigravityAdapter,
-  zcode: ZCodeAdapter
+  zcode: ZCodeAdapter,
+  claude: ClaudeAdapter,
+  dsh: DshAdapter
 });
 
 const ALIASES = Object.freeze({
@@ -31,7 +35,16 @@ const ALIASES = Object.freeze({
   'codex-cli': 'codex',
   codex_cli: 'codex',
   'z-code': 'zcode',
-  z_code: 'zcode'
+  z_code: 'zcode',
+  claudecode: 'claude',
+  'claude-code': 'claude',
+  claude_code: 'claude',
+  cc: 'claude',
+  deepseek: 'dsh',
+  'deepseek-harness': 'dsh',
+  deepseek_harness: 'dsh',
+  deepseekharness: 'dsh',
+  'dsh-cli': 'dsh'
 });
 
 function canonicalName(name) {

@@ -879,7 +879,12 @@ export class Bridge {
   }
 
   async run() {
+    if (!this.syncAbort || this.syncAbort.signal.aborted) {
+      this.syncAbort = new AbortController();
+    }
+    this.running = true;
     await this.load();
+    if (!this.running) return;
     for (const [id, room] of Object.entries(this.state.rooms)) {
       if (room.is_direct) this.directRoomIds.add(id);
       if (room.migration_candidates?.length) this.blockedRooms.add(id);
@@ -894,7 +899,7 @@ export class Bridge {
       if (item.status === 'queued' && !this.blockedRooms.has(item.roomId)) this.enqueue(item);
     }
     if (this.token && !this.paused) await this.refreshDirectRooms();
-    this.running = true;
+    if (!this.running) return;
     while (this.running) {
       if (!this.token || this.paused) {
         if (!this.token) this.syncState = 'unconfigured';
@@ -906,7 +911,13 @@ export class Bridge {
         await this.syncOnce();
       } catch (error) {
         if (!this.running) break;
-        if (this.paused || error.name === 'AbortError') continue;
+        if (this.paused) continue;
+        if (error.name === 'AbortError') {
+          if (!this.running) break;
+          await new Promise((resolveTimer) => setTimeout(resolveTimer, 1000));
+          if (!this.running) break;
+          continue;
+        }
         this.syncState = 'error';
         this.log('error', 'Matrix 同步失败');
         console.error('sync failed:', error.message);
