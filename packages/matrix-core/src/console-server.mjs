@@ -254,8 +254,30 @@ export function createConsole(coreEngine, configPath, port, options = {}) {
   }
 
   return createServer(async (req, res) => {
+    const originHeader = req.headers.origin;
+    const corsHeaders = {};
+    if (originHeader && (customOrigins.has(originHeader) || originHeader.startsWith('zcode-sandbox://') || originHeader.startsWith('http://localhost') || originHeader.startsWith('http://127.0.0.1') || originHeader === 'null')) {
+      corsHeaders['Access-Control-Allow-Origin'] = originHeader;
+      corsHeaders['Access-Control-Allow-Credentials'] = 'true';
+    }
+
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204, {
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Sidecar-Token',
+        ...corsHeaders,
+        ...securityHeaders
+      });
+      res.end();
+      return;
+    }
+
     const reply = (status, data) => {
-      res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', ...securityHeaders });
+      res.writeHead(status, {
+        'Content-Type': 'application/json; charset=utf-8',
+        ...corsHeaders,
+        ...securityHeaders
+      });
       res.end(JSON.stringify(data));
     };
 
@@ -277,9 +299,10 @@ export function createConsole(coreEngine, configPath, port, options = {}) {
         `http://127.0.0.1:${portFromHost}`,
         `http://localhost:${portFromHost}`,
         `http://[::1]:${portFromHost}`,
+        'null',
         ...customOrigins
       ]);
-      if (requestOrigin && !allowedOrigins.has(requestOrigin)) return reply(403, { error: '来源不受信任' });
+      if (requestOrigin && !allowedOrigins.has(requestOrigin) && !requestOrigin.startsWith('zcode-sandbox://')) return reply(403, { error: '来源不受信任' });
       if (!/^application\/json(?:;|$)/i.test(req.headers['content-type'] || '')) {
         return reply(403, { error: '来源不受信任' });
       }

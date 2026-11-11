@@ -9,11 +9,6 @@
 ```text
 ZCODE/
 ├── README.md                              # 本说明
-├── docs/
-│   └── migration-from-cc-connect.md       # cc-connect → 原生插件迁移手册（含回滚）
-├── tools/console-build/                   # 面板 mcp-app 连接器构建（产物提交，不入安装树）
-│   ├── connector.src.js                   # 连接器源码（ext-apps SDK 握手 + 主题跟随）
-│   └── build.mjs                          # esbuild 打包脚本（npm run build）
 └── plugins/                               # 本地开发市场根目录（添加市场时粘贴此目录）
     ├── marketplace.json                   # 本地市场目录
     └── matrix-bridge/                     # 插件源码
@@ -149,10 +144,9 @@ node $D uninstall # 停止并移除自启（保留 config/rooms 数据）
 
 ## 8. 从源码更新插件
 
-1. 修改 `ZCODE/plugins/matrix-bridge/` 源码，`plugin.json` 的 `version` 递增。
-2. 若改了面板连接器（`tools/console-build/connector.src.js`），先重建产物：
-   `cd tools/console-build && npm install && npm run build`（生成 `engine/console/vendor/mcp-app-connector.js`，产物随源码提交）。
-3. 同步守护进程引擎：`node engine/daemonctl.mjs install`。
+1. 修改 `packages/matrix-core/`、`packages/matrix-console-ui/` 或 `adapters/zcode/` 源码。
+2. 运行根目录统一同步构建：`npm run sync`（或 `./install.sh --agent zcode`）。
+3. 同步守护进程引擎：`node ZCODE/plugins/matrix-bridge/engine/daemonctl.mjs install`。
 4. ZCode 插件市场 → 对应市场 → 刷新 → 更新插件（或 CLI `zcode plugins update matrix-bridge`）。
 
 > **ZCode 右侧面板（mcp-app）说明**：面板 HTML 由 `mcp/server.mjs` 在 `resources/read` 时内联生成，其中 `vendor/mcp-app-connector.js` 负责与宿主完成 `ui/initialize` 握手（官方 ext-apps SDK），面板数据统一经 `app.callServerTool` 走 MCP 工具通道；浏览器直开 `http://127.0.0.1:47613/` 时不加载连接器，走 fetch 直连守护进程。

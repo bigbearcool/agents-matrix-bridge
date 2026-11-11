@@ -10,7 +10,6 @@
 antigravity/
 ├── plugin.json                        # Antigravity 插件清单文件
 ├── README.md                          # 插件完整使用、架构与开发说明
-├── install.sh                         # 一键同步安装并热重启本地插件脚本
 ├── assets/
 │   └── logo.svg                       # 插件图标
 ├── rules/

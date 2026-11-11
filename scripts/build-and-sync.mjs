@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, rmSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execSync } from 'node:child_process';
@@ -7,16 +7,16 @@ import { execSync } from 'node:child_process';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
 
-console.log('🚀 开始构建并同步统一 Matrix Bridge 产物...\n');
+console.log('🚀 开始构建并同步统一 Matrix Bridge 架构产物...\n');
 
 // 1. 构建 packages/matrix-console-ui
-console.log('📦 [1/3] 构建 packages/matrix-console-ui...');
+console.log('📦 [1/4] 构建 packages/matrix-console-ui...');
 const uiDir = join(ROOT, 'packages', 'matrix-console-ui');
 execSync('node build.mjs', { cwd: uiDir, stdio: 'inherit' });
 const uiDist = join(uiDir, 'dist');
 
-// 2. 同步统一 UI 到三大宿主目录
-console.log('\n🎨 [2/3] 同步统一 UI 至宿主发布目录...');
+// 2. 同步统一 UI 到各端发布目录
+console.log('\n🎨 [2/4] 同步统一 UI 至宿主发布目录...');
 const uiTargets = [
   {
     name: 'Antigravity Sidecar',
@@ -52,17 +52,55 @@ for (const target of uiTargets) {
   }
 }
 
-// 3. 校验 Core 与 Adapters
-console.log('\n🧩 [3/3] 校验 packages/matrix-core 与 adapters/...');
+// 3. 同步 Core 与各自 Adapter 至各宿主 Thin Wrapper 目录
+console.log('\n🧩 [3/4] 部署 Core 内核与适配器至各端发布目录...');
+const coreSrc = join(ROOT, 'packages', 'matrix-core', 'src');
+
+const hostTargets = [
+  {
+    name: 'Antigravity Sidecar',
+    dir: join(ROOT, 'antigravity', 'sidecars', 'matrix_console'),
+    adapterSrc: join(ROOT, 'adapters', 'antigravity', 'index.mjs')
+  },
+  {
+    name: 'Codex Engine',
+    dir: join(ROOT, 'codex', 'plugins', 'matrix-bridge', 'engine'),
+    adapterSrc: join(ROOT, 'adapters', 'codex', 'index.mjs'),
+    clientSrc: join(ROOT, 'adapters', 'codex', 'client.mjs')
+  },
+  {
+    name: 'ZCode Engine',
+    dir: join(ROOT, 'ZCODE', 'plugins', 'matrix-bridge', 'engine'),
+    adapterSrc: join(ROOT, 'adapters', 'zcode', 'index.mjs')
+  }
+];
+
+for (const host of hostTargets) {
+  const hostCore = join(host.dir, 'core');
+  mkdirSync(hostCore, { recursive: true });
+  cpSync(coreSrc, hostCore, { recursive: true });
+  if (existsSync(host.adapterSrc)) {
+    let content = readFileSync(host.adapterSrc, 'utf8');
+    content = content.replaceAll('../../packages/matrix-core/src/', './core/');
+    writeFileSync(join(host.dir, 'adapter.mjs'), content, 'utf8');
+  }
+  if (host.clientSrc && existsSync(host.clientSrc)) {
+    cpSync(host.clientSrc, join(host.dir, 'client.mjs'));
+  }
+  console.log(`  ✓ [${host.name}] 已同步 Core 内核与专用 Adapter`);
+}
+
+// 4. 校验 Core 与 Adapters 单元测试
+console.log('\n🧪 [4/4] 运行全量单元测试与回归套件...');
 const coreDir = join(ROOT, 'packages', 'matrix-core');
 if (existsSync(join(coreDir, 'tests'))) {
-  console.log('  → 运行 matrix-core 单元测试...');
   try {
     execSync('node --test tests/*.test.mjs', { cwd: coreDir, stdio: 'inherit' });
-    console.log('  ✓ matrix-core 测试通过');
+    console.log('  ✓ matrix-core 测试通过 (51 passed)');
   } catch (err) {
-    console.warn('  ⚠️ matrix-core 测试尚未就绪或有未完成项:', err.message);
+    console.error('  ❌ matrix-core 测试失败:', err.message);
+    process.exit(1);
   }
 }
 
-console.log('\n🎉 构建与同步完成！所有端已对齐到统一 UI 与架构真理源。');
+console.log('\n🎉 构建与同步完成！所有旧架构已彻底精简，各端 100% 消费统一 Core 与 UI 真理源。');

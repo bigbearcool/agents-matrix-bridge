@@ -29,32 +29,25 @@ node plugins/matrix-bridge/engine/main.mjs /绝对路径/config.json
 
 管理台默认地址为 `http://127.0.0.1:47614/`，可通过 `console_port` 修改。`admins` 必须是具体 MXID；`allowed_senders` 支持具体 MXID 或 `*`。首次同步不处理历史消息。状态默认存于 `~/.codex/matrix-bridge/state.json`，附件位于同目录的 `attachments`；状态包含消息内容，请保护目录。令牌不传给 Codex 子进程。浏览器登录所得令牌不持久化，进程重启后需重新登录或重新提供令牌。
 
-## 从 cc-connect 迁移
-
-```sh
-python3 scripts/migrate.py
-```
-
-只读取旧配置、工作区和会话，汇总可迁移数量；指定 `--output /一个不存在的目录` 生成非凭证配置及状态草稿（权限 0600）。多个旧会话对应同一房间时保留候选并暂停该房间，由用户在管理台核对选择。草稿仍需核对和验收，不能直接切换。会话恢复依赖旧 `codex_home` 的会话数据。
-
-`scripts/start-from-cc.py --config /绝对路径/config.json` 可启动时读取现有 cc-connect 令牌，不生成新的令牌文件；仅在目标 Homeserver 与账号完全匹配时允许复用。`scripts/launchd.py` 可生成 LaunchAgent 草稿，但不会安装或启动它。不要让旧桥和新桥同时消费同一 Matrix 账号。
-
 ## 安装插件
 
-本地市场根目录为 `plugins/`：
+推荐使用根目录统一安装器：
+
+```sh
+./install.sh --agent codex
+```
+
+或使用 Codex 插件市场命令：
 
 ```sh
 codex plugin marketplace add /绝对路径/codex/plugins
 codex plugin add matrix-bridge@bigbear-matrix-codex
 ```
 
-当前源码及本机安装为 `0.2.3`；真实 Codex app-server 已发现嵌入入口，当前桌面实例的入口显示和交互仍待验证。
-
-## 验证及剩余差异
+## 验证与测试
 
 ```sh
-node --test tests/*.test.mjs
-python3 scripts/migrate.py
+npm test
 ```
 
 模拟测试不等于真实渠道验收。尚未完成 Pantalaimon 加密、真实 Matrix 收发和附件、Codex 实际回答及续接、审批和迁移切换验收；模型兼容性、图片格式尺寸、文件回传、Codex 宿主内的嵌入入口及 Antigravity 控制台的完整交互仍需逐项核对。源项目中的模型自动重试没有照搬：执行结果未知时不自动重放。

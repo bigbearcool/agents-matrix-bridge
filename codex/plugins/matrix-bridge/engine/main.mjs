@@ -1,8 +1,7 @@
-import { readFile } from 'node:fs/promises';
-import { Bridge } from './bridge.mjs';
-import { stat } from 'node:fs/promises';
-import { acquireLock } from './instance-lock.mjs';
-import { createConsole } from './console-server.mjs';
+import { readFile, stat } from 'node:fs/promises';
+import { Bridge, acquireLock, createConsole } from './core/index.mjs';
+import { CodexAdapter } from './adapter.mjs';
+
 const path = process.argv[2];
 if (!path) { console.error('Usage: node main.mjs /path/to/config.json'); process.exit(2); }
 const config = JSON.parse(await readFile(path, 'utf8'));
@@ -12,7 +11,9 @@ if (!['https:', ...(config.matrix_transport === 'pantalaimon' ? ['http:'] : [])]
 if (config.matrix_transport && !['direct','pantalaimon'].includes(config.matrix_transport)) throw new Error('Unknown Matrix transport');
 if (!Array.isArray(config.admins) || !config.admins.length || config.admins.some(id => typeof id !== 'string' || !/^@[^:*]+:[^*]+$/.test(id))) throw new Error('admins must contain explicit Matrix user IDs');
 if (!(await stat(config.cwd)).isDirectory()) throw new Error('cwd must be an existing directory');
-const bridge = new Bridge(config, process.env.MATRIX_ACCESS_TOKEN || '');
+
+const adapter = new CodexAdapter(config);
+const bridge = new Bridge({ config, adapter, token: process.env.MATRIX_ACCESS_TOKEN || '' });
 const releaseLock = await acquireLock(bridge.statePath);
 process.on('SIGTERM', () => bridge.stop());
 process.on('SIGINT', () => bridge.stop());

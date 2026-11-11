@@ -70,6 +70,47 @@ export class Bridge {
     const extra = legacy ? { ...options, ...legacyOptions, token: legacyToken ?? legacyOptions.token } : options;
     if (!config || typeof config !== 'object') throw new TypeError('Bridge requires a config object');
 
+    if (!extra.adapter && (extra.clientFactory || typeof legacyOptions?.clientFactory === 'function')) {
+      const factory = extra.clientFactory || legacyOptions.clientFactory;
+      extra.adapter = {
+        name: 'codex',
+        executeTurn: async (params) => {
+          const client = factory();
+          try {
+            if (typeof client.initialize === 'function') await client.initialize();
+            const res = await client.turn({
+              threadId: params.threadId,
+              cwd: params.cwd,
+              text: params.prompt,
+              attachments: params.attachments || [],
+              model: params.model || '',
+              effort: params.effort || '',
+              onThread: params.onThread || (() => {}),
+              onApproval: params.onApproval || (() => {})
+            });
+            return { replyText: res.text || '', threadId: res.threadId || '' };
+          } finally {
+            if (typeof client.close === 'function') client.close();
+          }
+        },
+        listAvailableModels: async () => {
+          const client = factory();
+          try {
+            if (typeof client.initialize === 'function') await client.initialize();
+            const result = (await client.request?.('model/list', {})) || {};
+            return {
+              models: (result.data || []).map((m) => ({ id: m.id, name: m.id, description: '' })),
+              efforts: []
+            };
+          } catch {
+            return { models: [], efforts: [] };
+          } finally {
+            if (typeof client.close === 'function') client.close();
+          }
+        }
+      };
+    }
+
     this.config = config;
     this.adapter = coerceAdapter(extra.adapter);
     this.token = extra.token ?? extra.accessToken ?? '';
@@ -288,6 +329,9 @@ export class Bridge {
         if (pending.index === pending.questions.length) {
           this.approvals.delete(input[1]);
           clearTimeout(pending.timer);
+          if (pending.client && pending.requestId !== undefined) {
+            pending.client.respondInput(pending.requestId, pending.answers);
+          }
           pending.resolve(pending.answers);
         } else {
           await this.sendQuestion(input[1], pending);
@@ -306,7 +350,11 @@ export class Bridge {
       ) {
         this.approvals.delete(approval[2]);
         clearTimeout(pending.timer);
-        pending.resolve(approval[1].toLowerCase() === 'approve' ? 'accept' : 'decline');
+        const decision = approval[1].toLowerCase() === 'approve' ? 'accept' : 'decline';
+        if (pending.client && pending.requestId !== undefined) {
+          pending.client.respondApproval(pending.requestId, decision, pending.request);
+        }
+        pending.resolve(decision);
       }
       return;
     }
@@ -575,15 +623,33 @@ export class Bridge {
     );
   }
 
-  async requestInput(roomId, ev, thread, request, tracked) {
+  async requestInput(clientOrRoomId, evOrRoomId, threadOrEv, requestOrThread, trackedOrRequest, extraTracked) {
+    let client = null;
+    let roomId = clientOrRoomId;
+    let ev = evOrRoomId;
+    let thread = threadOrEv;
+    let request = requestOrThread;
+    let tracked = trackedOrRequest;
+    if (clientOrRoomId && typeof clientOrRoomId === 'object' && typeof clientOrRoomId.respondInput === 'function') {
+      client = clientOrRoomId;
+      roomId = evOrRoomId;
+      ev = threadOrEv;
+      thread = requestOrThread;
+      request = trackedOrRequest;
+      tracked = extraTracked;
+    }
     const questions = request?.params?.questions || [];
     const invalid = !questions.length || questions.some((question) => question.isSecret || !question.id || !question.question);
-    if (invalid) return {};
+    if (invalid) {
+      if (client && request?.id !== undefined) client.respondInput(request.id, {});
+      return {};
+    }
     const id = randomBytes(6).toString('hex');
     let resolveAnswer;
     const answer = new Promise((resolve) => { resolveAnswer = resolve; });
     const pending = {
       type: 'input',
+      client,
       requestId: request.id,
       roomId,
       sender: ev.sender,
@@ -605,22 +671,43 @@ export class Bridge {
       clearTimeout(pending.timer);
       this.approvals.delete(id);
       tracked?.delete(id);
+      if (client && request?.id !== undefined) client.respondInput(request.id, {});
       resolveAnswer({});
       this.log('warn', `补充信息请求投递失败：${error.message}`);
+      if (client) throw error;
     }
-    return answer;
+    return client ? undefined : answer;
   }
 
-  async requestApproval(roomId, ev, thread, request, tracked) {
+  async requestApproval(clientOrRoomId, roomIdOrEv, evOrThread, threadOrRequest, requestOrTracked, extraTracked) {
+    let client = null;
+    let roomId = clientOrRoomId;
+    let ev = roomIdOrEv;
+    let thread = evOrThread;
+    let request = threadOrRequest;
+    let tracked = requestOrTracked;
+    if (clientOrRoomId && typeof clientOrRoomId === 'object' && typeof clientOrRoomId.respondApproval === 'function') {
+      client = clientOrRoomId;
+      roomId = roomIdOrEv;
+      ev = evOrThread;
+      thread = threadOrRequest;
+      request = requestOrTracked;
+      tracked = extraTracked;
+    }
+
     const id = randomBytes(6).toString('hex');
     let resolveDecision;
     const decision = new Promise((resolve) => { resolveDecision = resolve; });
     const timer = setTimeout(() => {
-      if (this.approvals.delete(id)) resolveDecision('decline');
+      if (this.approvals.delete(id)) {
+        if (client && request?.id !== undefined) client.respondApproval(request.id, 'decline', request);
+        resolveDecision('decline');
+      }
     }, APPROVAL_TIMEOUT_MS);
     this.approvals.set(id, {
       type: 'approval',
-      requestId: request.id,
+      client,
+      requestId: request?.id,
       roomId,
       sender: ev.sender,
       eventId: ev.event_id,
@@ -631,8 +718,8 @@ export class Bridge {
     });
     tracked?.add(id);
 
-    const params = request.params || {};
-    const method = String(request.method || '');
+    const params = request?.params || {};
+    const method = String(request?.method || '');
     const detail = method.includes('commandExecution')
       ? String(params.command || '(命令详情不可用)')
       : method.includes('permissions')
@@ -649,10 +736,12 @@ export class Bridge {
       clearTimeout(timer);
       this.approvals.delete(id);
       tracked?.delete(id);
+      if (client && request?.id !== undefined) client.respondApproval(request.id, 'decline', request);
       resolveDecision('decline');
       this.log('warn', `审批请求投递失败：${error.message}`);
+      if (client) throw error;
     }
-    return decision;
+    return client ? undefined : decision;
   }
 
   /** Settle a pending approval from an embedding UI. */
@@ -782,6 +871,11 @@ export class Bridge {
     this.running = false;
     this.syncState = 'offline';
     this.syncAbort.abort();
+    try {
+      this.adapter?.close?.();
+    } catch {
+      // ignore
+    }
   }
 
   async run() {

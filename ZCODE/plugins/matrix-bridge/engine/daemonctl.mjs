@@ -50,6 +50,12 @@ function ensureEngineCopied() {
   mkdirSync(LOG_DIR, { recursive: true });
   // 复制引擎主体与控制台资源
   cpSync(join(ENGINE_SRC, 'main.mjs'), join(ENGINE_DST, 'main.mjs'));
+  if (existsSync(join(ENGINE_SRC, 'core'))) {
+    cpSync(join(ENGINE_SRC, 'core'), join(ENGINE_DST, 'core'), { recursive: true });
+  }
+  if (existsSync(join(ENGINE_SRC, 'adapter.mjs'))) {
+    cpSync(join(ENGINE_SRC, 'adapter.mjs'), join(ENGINE_DST, 'adapter.mjs'));
+  }
   if (existsSync(join(ENGINE_SRC, 'console'))) {
     cpSync(join(ENGINE_SRC, 'console'), join(ENGINE_DST, 'console'), { recursive: true });
   }

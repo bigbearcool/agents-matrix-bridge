@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Cache and temporary files
+.cache/
+.tmp/
+__pycache__/
+*.pyc
+*.pyo
+*.log
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Workspace metadata
+.video_agent/
+.zcode/
+tasks/
