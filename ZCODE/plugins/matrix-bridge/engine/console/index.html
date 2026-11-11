@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-agent="generic">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Matrix Bridge · ZCode</title>
+  <title>Matrix Bridge 控制台</title>
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -18,13 +18,17 @@
         </div>
         <div class="brand-meta">
           <div class="brand-name-row">
-            <h1 class="brand-name">Matrix Bridge</h1>
+            <h1 class="brand-name" id="brandName">Matrix Bridge 控制台</h1>
+            <span class="agent-badge" id="agentBadge" title="自动感知当前运行 Agent">
+              <span class="agent-badge-dot" id="agentBadgeDot"></span>
+              <span id="agentBadgeLabel">Agent</span>
+            </span>
             <span class="state-pill offline" id="statePill">
               <span class="state-dot"></span>
               <span id="stateLabel">未配置</span>
             </span>
           </div>
-          <div class="brand-sub" id="headerSub">完成账号登录即可接入 Matrix 房间</div>
+          <div class="brand-sub" id="headerSub">统一控制台 · 完成账号登录即可接入 Matrix 房间</div>
         </div>
       </div>
 
@@ -293,10 +297,10 @@
       <!-- 已绑定账号概览卡 -->
       <section class="panel-card" id="accountSummaryCard">
         <div class="account-row">
-          <div class="account-avatar" id="accountAvatar">Z</div>
+          <div class="account-avatar" id="accountAvatar">M</div>
           <div class="account-details">
-            <div class="account-uid" id="accountUserId">@zcode-mini:matrix.bigbear.cool</div>
-            <div class="account-server" id="accountServer">http://192.168.124.203:18010</div>
+            <div class="account-uid" id="accountUserId">@bot:matrix.example.org</div>
+            <div class="account-server" id="accountServer">http://127.0.0.1:8008</div>
           </div>
         </div>
         <div class="account-actions">
@@ -307,6 +311,7 @@
 
       <!-- 登录 / 接入表单卡 -->
       <section class="panel-card hidden" id="authFormCard">
+        <form id="auth-form">
         <div class="card-head">
           <div>
             <h2 class="card-heading">接入 Matrix 机器人账号</h2>
@@ -328,7 +333,7 @@
         <div class="auth-mode-pane" id="authPanePassword">
           <div class="form-field">
             <label class="field-label" for="inputUsername">Bot 用户名</label>
-            <input type="text" class="text-input" id="inputUsername" placeholder="如 zcode-bot 或 @zcode-bot:server" autocomplete="username">
+            <input type="text" class="text-input" id="inputUsername" placeholder="如 my-bot 或 @my-bot:server" autocomplete="username">
           </div>
           <div class="form-field">
             <label class="field-label" for="inputPassword">登录密码</label>
@@ -352,6 +357,7 @@
           </div>
           <button type="button" class="btn btn-primary btn-full" id="btnSubmitToken">验证 Token 并启动</button>
         </div>
+        </form>
       </section>
 
       <!-- 全局默认模型与思考深度 -->
@@ -366,7 +372,7 @@
         <div class="form-field">
           <label class="field-label" for="selectDefaultModel">默认对话模型</label>
           <select class="select-input" id="selectDefaultModel">
-            <option value="">跟随 ZCode CLI 默认设置</option>
+            <option value="">跟随系统 / CLI 默认设置</option>
           </select>
         </div>
 
@@ -428,11 +434,12 @@
           <summary>高级环境配置</summary>
           <div class="advanced-body">
             <div class="form-field">
-              <label class="field-label" for="inputZcodeCmd">ZCode CLI 执行路径</label>
+              <label class="field-label" for="inputAgentCliCmd">Agent CLI 执行路径</label>
               <div class="inline-save-row">
-                <input type="text" class="text-input mono" id="inputZcodeCmd" placeholder="/Users/xiangyu/bin/zcode">
-                <button type="button" class="btn btn-sm btn-subtle" id="btnSaveZcodeCmd">保存</button>
+                <input type="text" class="text-input mono" id="inputAgentCliCmd" data-alias-ids="inputCodexCmd inputAgyCmd inputZcodeCmd" placeholder="codex / agy / zcode，留空则使用 PATH 中的默认命令">
+                <button type="button" class="btn btn-sm btn-subtle" id="btnSaveAgentCliCmd" data-alias-ids="btnSaveCodexCmd btnSaveAgyCmd btnSaveZcodeCmd">保存</button>
               </div>
+              <span class="field-hint">统一适配 Antigravity / Codex / ZCode，保存时自动写入当前 Agent 对应的配置键</span>
             </div>
           </div>
         </details>
@@ -504,7 +511,8 @@
 
   <div class="toast-stack" id="toastStack"></div>
 
-  <script src="/preload.js"></script>
-  <script src="/app.js"></script>
+  <p id="error" class="hidden" role="alert"></p>
+  <script src="/panel-adapter.js"></script>
+  <script type="module" src="/app.js"></script>
 </body>
 </html>

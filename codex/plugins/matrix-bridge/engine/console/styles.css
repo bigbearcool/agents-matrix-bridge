@@ -2,7 +2,8 @@
    Matrix Bridge Console — Refined Native Sidebar Design System
    ========================================================== */
 
-:root {
+:root,
+:root[data-theme="dark"] {
   color-scheme: dark;
   --bg-canvas: #111216;
   --bg-surface: #181a20;
@@ -215,6 +216,56 @@ html, body {
   font-weight: 600;
   letter-spacing: -0.01em;
   color: var(--text-primary);
+}
+
+/* Agent 自适应徽标（Antigravity / Codex / ZCode） */
+.agent-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1.5px 7px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+  color: var(--indigo);
+  background: var(--indigo-soft);
+  border: 1px solid var(--indigo-border);
+  white-space: nowrap;
+}
+
+.agent-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 2px color-mix(in srgb, currentColor 22%, transparent);
+  flex-shrink: 0;
+}
+
+[data-agent="antigravity"] .agent-badge {
+  color: var(--indigo);
+  background: var(--indigo-soft);
+  border-color: var(--indigo-border);
+}
+
+[data-agent="codex"] .agent-badge {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: var(--accent-border);
+}
+
+[data-agent="zcode"] .agent-badge {
+  color: var(--warning);
+  background: var(--warning-soft);
+  border-color: var(--warning-border);
+}
+
+[data-agent="generic"] .agent-badge {
+  color: var(--text-secondary);
+  background: var(--bg-elevated);
+  border-color: var(--border-subtle);
 }
 
 .brand-sub {
@@ -1901,8 +1952,254 @@ html, body {
   }
 }
 
-/* MCP Confirm Overlay */
-.confirm-overlay{position:fixed;inset:0;background:#0008;display:grid;place-items:center;z-index:1000}
-.confirm-dialog{background:var(--bg-card, Canvas);color:var(--text-main, CanvasText);max-width:28rem;padding:1.5rem;border-radius:12px;border:1px solid var(--border-color,#333);box-shadow:0 12px 36px rgba(0,0,0,0.5)}
-.confirm-dialog p{margin-bottom:1rem;line-height:1.5}
-.confirm-dialog button{margin-right:.5rem}
+/* MCP Confirm Overlay（深浅色均保持清晰对比度） */
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(3, 7, 18, 0.58);
+  backdrop-filter: blur(2px);
+}
+
+.confirm-dialog {
+  width: 100%;
+  max-width: 28rem;
+  padding: 1.35rem 1.4rem 1.15rem;
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.42), var(--shadow-sm);
+}
+
+.confirm-dialog p {
+  margin-bottom: 1rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+  font-size: 12.5px;
+}
+
+.confirm-dialog button {
+  margin-right: 0.5rem;
+  padding: 5px 13px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.confirm-dialog button:hover {
+  border-color: var(--accent-border);
+  background: var(--bg-hover);
+}
+
+.confirm-dialog button:last-of-type {
+  color: #ffffff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.confirm-dialog button:last-of-type:hover {
+  background: var(--accent-hover);
+}
+
+.confirm-dialog button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* 房间故障 / 迁移提示卡（兼容旧版内联样式） */
+.room-notice-box {
+  margin: 8px 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 11.5px;
+}
+
+.room-notice-box.warn {
+  background: var(--warning-soft);
+  border: 1px solid var(--warning-border);
+}
+
+.room-notice-box.warn .room-notice-title {
+  color: var(--warning);
+}
+
+.room-notice-box.danger {
+  background: var(--danger-soft);
+  border: 1px solid var(--danger-border);
+}
+
+.room-notice-box.danger .room-notice-title {
+  color: var(--danger);
+}
+
+.room-notice-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.room-notice-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.room-kind-tag[data-self-healed="true"]::after {
+  content: " · 自愈";
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* 中等宽度（侧边栏抽屉）响应式 */
+@media (max-width: 560px) {
+  .top-header {
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .brand-sub {
+    white-space: normal;
+  }
+
+  .rooms-toolbar,
+  .log-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .policy-grid.cols-2,
+  .policy-grid.cols-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .account-row {
+    align-items: flex-start;
+  }
+
+  .account-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .ws-bar,
+  .model-bar {
+    flex-wrap: wrap;
+  }
+}
+
+/* ==========================================================
+   Data Table / Drawer / Status Dot（统一深浅色对比度）
+   ========================================================== */
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+}
+
+.data-table,
+.panel-card table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11.5px;
+  color: var(--text-primary);
+  background: transparent;
+}
+
+.data-table th,
+.panel-card table th {
+  padding: 8px 10px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border-strong);
+  white-space: nowrap;
+}
+
+.data-table td,
+.panel-card table td {
+  padding: 8px 10px;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: top;
+}
+
+.data-table tbody tr:last-child td,
+.panel-card table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tbody tr:hover,
+.panel-card table tbody tr:hover {
+  background: var(--bg-hover);
+}
+
+.data-table .cell-mono,
+.panel-card table .cell-mono {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.status-dot,
+.state-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.status-dot.online {
+  color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.status-dot.warning {
+  color: var(--warning);
+  box-shadow: 0 0 0 3px var(--warning-soft);
+}
+
+.status-dot.danger {
+  color: var(--danger);
+  box-shadow: 0 0 0 3px var(--danger-soft);
+}
+
+.drawer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+}
+
+@media (max-width: 560px) {
+  .table-scroll {
+    border-radius: var(--radius-sm);
+  }
+
+  .data-table th,
+  .data-table td,
+  .panel-card table th,
+  .panel-card table td {
+    padding: 6px 8px;
+    white-space: nowrap;
+  }
+}
+

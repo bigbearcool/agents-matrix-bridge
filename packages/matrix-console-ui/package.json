@@ -1,0 +1,16 @@
+{
+  "name": "@matrix-bridge/console-ui",
+  "version": "1.0.0",
+  "description": "Matrix Bridge 统一管理控制台前端（Antigravity / Codex / ZCode 单一真理源）",
+  "type": "module",
+  "private": true,
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

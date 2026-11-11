@@ -1,0 +1,35 @@
+{
+  "name": "@matrix-bridge/core",
+  "version": "1.0.0",
+  "description": "Agent-agnostic Matrix bridge kernel: sync, DMs, security, commands, media and console REST API.",
+  "type": "module",
+  "main": "./src/index.mjs",
+  "exports": {
+    ".": "./src/index.mjs",
+    "./adapter": "./src/adapter.mjs",
+    "./bridge": "./src/bridge.mjs",
+    "./commands": "./src/commands.mjs",
+    "./console-server": "./src/console-server.mjs",
+    "./security": "./src/security.mjs",
+    "./media": "./src/media.mjs",
+    "./instance-lock": "./src/instance-lock.mjs"
+  },
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs"
+  },
+  "keywords": [
+    "matrix",
+    "bridge",
+    "agent",
+    "adapter",
+    "e2ee"
+  ],
+  "license": "MIT"
+}

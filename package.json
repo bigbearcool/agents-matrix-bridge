@@ -1,0 +1,19 @@
+{
+  "name": "matrix-bridge-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Unified Matrix Bridge monorepo for Antigravity, Codex, and ZCode",
+  "workspaces": [
+    "packages/*",
+    "adapters/*"
+  ],
+  "scripts": {
+    "build:ui": "node packages/matrix-console-ui/build.mjs",
+    "build": "node scripts/build-and-sync.mjs",
+    "sync": "node scripts/build-and-sync.mjs",
+    "test:core": "node --test packages/matrix-core/tests/*.test.mjs",
+    "test:adapters": "node --test adapters/tests/*.test.mjs",
+    "test": "npm run test:core && npm run test:adapters"
+  }
+}

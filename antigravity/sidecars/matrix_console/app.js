@@ -1,6 +1,71 @@
 (() => {
   const $ = (id) => document.getElementById(id);
 
+  const DEFAULT_MODEL_LABEL = '跟随系统 / CLI 默认设置';
+  const CONSOLE_AGENT = window.bridgeAgent || window.MATRIX_BRIDGE_AGENT || {
+    id: 'generic',
+    name: '通用浏览器'
+  };
+
+  // Agent CLI 配置键：统一 UI + 各 Agent 后端配置键兼容
+  const AGENT_CLI_KEYS = {
+    antigravity: ['agy_cmd', 'agent_cli_cmd'],
+    codex: ['codex_cmd', 'agent_cli_cmd'],
+    zcode: ['zcode_cmd', 'agent_cli_cmd'],
+    generic: ['codex_cmd', 'agent_cli_cmd']
+  };
+
+  function firstById(...ids) {
+    for (const id of ids) {
+      const el = $(id);
+      if (el) return el;
+    }
+    return null;
+  }
+
+  function agentCliInput() {
+    return firstById('inputAgentCliCmd', 'inputCodexCmd', 'inputAgyCmd', 'inputZcodeCmd');
+  }
+
+  function agentCliButton() {
+    return firstById('btnSaveAgentCliCmd', 'btnSaveCodexCmd', 'btnSaveAgyCmd', 'btnSaveZcodeCmd');
+  }
+
+  function agentCliKeys() {
+    return AGENT_CLI_KEYS[CONSOLE_AGENT.id] || AGENT_CLI_KEYS.generic;
+  }
+
+  function agentCliKey() {
+    return agentCliKeys()[0];
+  }
+
+  function roomIsDirect(room) {
+    if (room.is_dm === true) return true;
+    if (room.is_dm === false) return false;
+    // 后端未下发 is_dm 时，按成员与策略自愈推断私聊状态
+    const peers = Object.keys(room.peers || {});
+    if (peers.length === 1) {
+      const peer = peers[0];
+      const selfId = statusState.user_id || '';
+      if (peer === selfId) return false;
+      // 仅剩一个对端且成员数不超过 2 时，按私聊处理（后端 is_dm 缺失时自愈）
+      if (room.member_count !== undefined && Number(room.member_count) <= 2) return true;
+      const peerLocal = peer.replace(/^@/, '').split(':')[0];
+      const roomName = String(room.name || '');
+      return !roomName || roomName === peer || roomName === peerLocal;
+    }
+    return false;
+  }
+
+  function roomKind(room) {
+    const isDm = roomIsDirect(room);
+    const selfHealed = room.is_dm === undefined && isDm;
+    const label = isDm
+      ? '私聊'
+      : (room.member_count > 0 ? `群聊 · ${room.member_count}人` : '群聊');
+    return { isDm, selfHealed, label };
+  }
+
   const EFFORT_OPTIONS = [
     { value: '', label: '默认' },
     { value: 'low', label: 'Low' },
@@ -171,22 +236,34 @@
     return result;
   }
 
-  // ---------- Secure API Client (supports Sidecar Token + Standalone) ----------
+  // ---------- Unified API Client (bridgeAPI first, fetch fallback) ----------
   const urlSidecarToken = new URLSearchParams(window.location.search).get('token');
+  const agentFallbackPort = (CONSOLE_AGENT && CONSOLE_AGENT.port) || 47614;
+  const API_BASE = ['127.0.0.1', 'localhost'].includes(location.hostname)
+    ? ''
+    : `http://127.0.0.1:${agentFallbackPort}`;
 
   async function api(path, method = 'GET', body = null) {
-    const headers = { 'Content-Type': 'application/json' };
-    if (urlSidecarToken) {
-      headers['X-Sidecar-Token'] = urlSidecarToken;
+    const options = { method, headers: {} };
+    if (body !== null && body !== undefined) options.body = body;
+
+    // 优先走 panel-adapter：MCP App 容器自动转为 Tool 调用，浏览器自动转为 fetch
+    if (window.bridgeAPI && typeof window.bridgeAPI.request === 'function') {
+      return window.bridgeAPI.request(path, options);
     }
-    const opts = { method, headers };
-    if (body !== null) {
-      opts.body = JSON.stringify(body);
+
+    // 极端情况下（panel-adapter 未加载）保持独立可用的 fetch 兜底
+    const headers = { 'Content-Type': 'application/json' };
+    if (urlSidecarToken) headers['X-Sidecar-Token'] = urlSidecarToken;
+    const requestOptions = { method, headers };
+    if (body !== null && body !== undefined) {
+      requestOptions.body = typeof body === 'string' ? body : JSON.stringify(body);
     }
     const fetcher = (window.sidecar && typeof window.sidecar.fetch === 'function')
-      ? window.sidecar.fetch
+      ? window.sidecar.fetch.bind(window.sidecar)
       : fetch;
-    const res = await fetcher(path, opts);
+    const url = path.startsWith('http') ? path : `${API_BASE}${path}`;
+    const res = await fetcher(url, requestOptions);
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       throw new Error(data.error || `请求失败 (HTTP ${res.status})`);
@@ -234,6 +311,16 @@
       btn.textContent = isPwd ? '隐藏' : '显示';
     });
   });
+
+  // 登录卡片表单：支持回车提交（按钮本身保持 type=button 以避免重复触发）
+  const authForm = $('auth-form');
+  if (authForm) {
+    authForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const tokenMode = !$('authPaneToken')?.classList.contains('hidden');
+      (tokenMode ? $('btnSubmitToken') : $('btnSubmitLogin'))?.click();
+    });
+  }
 
   // ---------- Header & Account State Rendering ----------
   function renderHeaderAndAccount() {
@@ -314,7 +401,7 @@
     const sel = $('selectDefaultModel');
     if (!sel) return;
     const curVal = selectedModel !== undefined ? selectedModel : (statusState.default_model || '');
-    const options = [`<option value="">跟随 Antigravity CLI 默认设置</option>`];
+    const options = [`<option value="">${escapeHtml(DEFAULT_MODEL_LABEL)}</option>`];
     const seen = new Set(['']);
     for (const m of availableModels) {
       seen.add(m.id);
@@ -567,8 +654,16 @@
       if (document.activeElement !== $('inputBaseDir')) {
         $('inputBaseDir').value = cfg.base_dir || '';
       }
-      if (document.activeElement !== $('inputAgyCmd')) {
-        $('inputAgyCmd').value = cfg.agy_cmd || '';
+      const cliInput = agentCliInput();
+      if (cliInput && document.activeElement !== cliInput) {
+        let cliValue = '';
+        for (const key of agentCliKeys()) {
+          if (cfg[key] !== undefined && cfg[key] !== null) {
+            cliValue = cfg[key];
+            break;
+          }
+        }
+        cliInput.value = cliValue || '';
       }
 
       statusState.default_policy = cfg.default_policy || 'mention';
@@ -637,7 +732,7 @@
   }
 
   function formatPolicyHint(room) {
-    if (room.is_dm) return '默认(直回)';
+    if (roomKind(room).isDm) return '默认(直回)';
     const g = statusState.default_policy || 'mention';
     if (g === 'all') return '默认(全回)';
     if (g === 'mute') return '默认(静音)';
@@ -819,8 +914,9 @@
 
     const q = roomSearch.trim().toLowerCase();
     const filtered = roomsList.filter(r => {
-      if (roomFilter === 'group' && r.is_dm) return false;
-      if (roomFilter === 'dm' && !r.is_dm) return false;
+      const direct = roomKind(r).isDm;
+      if (roomFilter === 'group' && direct) return false;
+      if (roomFilter === 'dm' && !direct) return false;
       if (roomFilter === 'bound' && !r.workspace) return false;
       if (q) {
         const hay = `${r.name || ''} ${r.id || ''} ${r.workspace || ''} ${r.model || ''}`.toLowerCase();
@@ -855,12 +951,11 @@
       const card = document.createElement('div');
       card.className = 'room-card';
 
-      const isDm = Boolean(room.is_dm);
+      const kind = roomKind(room);
+      const isDm = kind.isDm;
       const title = room.name || room.id;
       const initial = title.replace(/^[@#!]/, '').trim().charAt(0).toUpperCase() || 'R';
-      const kindLabel = isDm
-        ? '私聊'
-        : (room.member_count > 0 ? `群聊 · ${room.member_count}人` : '群聊');
+      const kindLabel = kind.label;
 
       const curPol = room.policy || 'default';
       const isBound = Boolean(room.workspace);
@@ -899,6 +994,35 @@
         <button type="button" class="seg-pill ${roomEffortVal === opt.value ? 'active' : ''}" data-room-effort="${escapeHtml(opt.value)}">${escapeHtml(opt.label)}</button>
       `).join('');
 
+      let extraAlert = '';
+      if (room.migration_candidates?.length) {
+        extraAlert += `
+          <div class="room-notice-box warn" style="margin:8px 0;padding:10px 12px;background:var(--warning-soft);border:1px solid var(--warning-border);border-radius:var(--radius-sm);color:var(--text-primary);">
+            <div class="room-notice-title" style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--warning);margin-bottom:6px;">
+              <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor"><path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zM7.25 4.75h1.5v4h-1.5v-4zm0 5.25h1.5v1.5h-1.5V10z"/></svg>
+              <span>发现旧会话候选，请指定延续哪个历史上下文：</span>
+            </div>
+            <div class="room-notice-actions" style="display:flex;gap:6px;flex-wrap:wrap;">`;
+        for (const cand of room.migration_candidates) {
+          const scopeStr = (cand.scopes || []).map(s => {
+            const m = s.match(/@([^:]+)/);
+            return m ? `@${m[1]}` : s;
+          }).join(', ');
+          const label = scopeStr ? `延续 ${scopeStr} 会话` : `延续 ${cand.thread_id.slice(0, 8)}...`;
+          extraAlert += `<button type="button" class="btn btn-xs btn-outline js-pick-migration" data-thread="${escapeHtml(cand.thread_id)}" title="${escapeHtml(cand.thread_id)}" style="font-size:11px;padding:3px 8px;max-width:100%;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;">${escapeHtml(label)}</button>`;
+        }
+        extraAlert += `</div></div>`;
+      }
+      if (room.blocked && (!room.migration_candidates || !room.migration_candidates.length)) {
+        const pending = (room.pending || []).find(x => x.status !== 'queued');
+        extraAlert += `
+          <div class="room-notice-box danger" style="margin:8px 0;padding:10px 12px;background:var(--danger-soft);border:1px solid var(--danger-border);border-radius:var(--radius-sm);color:var(--text-primary);">
+            <div class="room-notice-title" style="font-size:12px;font-weight:600;color:var(--danger);margin-bottom:6px;">上一次执行结果未知，房间已自动暂停保护</div>
+            <div style="font-size:11.5px;color:var(--text-secondary);margin-bottom:8px;">事件：${escapeHtml(pending?.id || '待处理事件')}</div>
+            <button type="button" class="btn btn-xs btn-danger js-reconcile-event" data-event="${escapeHtml(pending?.id || '')}">核对无误并恢复队列</button>
+          </div>`;
+      }
+
       card.innerHTML = `
         <div class="room-head">
           <div class="room-identity">
@@ -906,7 +1030,7 @@
             <div class="room-title-wrap">
               <div class="room-title-row">
                 <span class="room-title" title="${escapeHtml(title)}">${escapeHtml(title)}</span>
-                <span class="room-kind-tag">${escapeHtml(kindLabel)}</span>
+                <span class="room-kind-tag" data-self-healed="${kind.selfHealed ? 'true' : 'false'}" title="${kind.selfHealed ? '已根据成员与策略自动识别为私聊（状态自愈）' : escapeHtml(kindLabel)}">${escapeHtml(kindLabel)}</span>
                 ${fedBadgeHtml}
                 ${encBadgeHtml}
               </div>
@@ -914,6 +1038,8 @@
             </div>
           </div>
         </div>
+
+        ${extraAlert}
 
         <div class="room-policy-row">
           <span class="room-row-label">触发规则</span>
@@ -1001,6 +1127,32 @@
             await refreshRooms(true);
           } catch (err) {
             showToast(err.message, 'error');
+          }
+        });
+      });
+
+      // Pick Migration Candidate
+      card.querySelectorAll('.js-pick-migration').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          try {
+            await api('/api/migration', 'POST', { id: room.id, thread_id: btn.dataset.thread });
+            showToast('已确认会话迁移');
+            await refreshRooms(true);
+          } catch (e) {
+            showToast(e.message, 'error');
+          }
+        });
+      });
+
+      // Reconcile Event
+      card.querySelectorAll('.js-reconcile-event').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          try {
+            await api('/api/reconcile', 'POST', { id: room.id, event_id: btn.dataset.event });
+            showToast('已核对未知结果，队列已恢复');
+            await refreshRooms(true);
+          } catch (e) {
+            showToast(e.message, 'error');
           }
         });
       });
@@ -1410,11 +1562,16 @@
     }
   });
 
-  // Save Agy CLI Path
-  $('btnSaveAgyCmd').addEventListener('click', async () => {
-    const agy_cmd = $('inputAgyCmd').value.trim();
+  // Save Agent CLI Path (Antigravity / Codex / ZCode)
+  const btnSaveCmd = agentCliButton();
+  btnSaveCmd?.addEventListener('click', async () => {
+    const cliInput = agentCliInput();
+    if (!cliInput) return;
+    const cliValue = cliInput.value.trim();
+    const payload = {};
+    payload[agentCliKey()] = cliValue;
     try {
-      await api('/api/config', 'POST', { agy_cmd });
+      await api('/api/config', 'POST', payload);
       await loadModels();
       showToast('CLI 执行路径已保存');
     } catch (err) {

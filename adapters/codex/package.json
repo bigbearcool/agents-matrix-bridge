@@ -1,0 +1,28 @@
+{
+  "name": "@matrix-bridge/adapter-codex",
+  "version": "1.0.0",
+  "description": "Codex app-server adapter for @matrix-bridge/core.",
+  "type": "module",
+  "main": "./index.mjs",
+  "exports": {
+    ".": "./index.mjs",
+    "./client": "./client.mjs"
+  },
+  "files": [
+    "index.mjs",
+    "client.mjs"
+  ],
+  "dependencies": {
+    "@matrix-bridge/core": "1.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "matrix",
+    "bridge",
+    "adapter",
+    "codex"
+  ],
+  "license": "MIT"
+}

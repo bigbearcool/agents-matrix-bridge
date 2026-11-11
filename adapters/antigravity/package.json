@@ -1,0 +1,27 @@
+{
+  "name": "@matrix-bridge/adapter-antigravity",
+  "version": "1.0.0",
+  "description": "Antigravity `agy` CLI adapter for @matrix-bridge/core.",
+  "type": "module",
+  "main": "./index.mjs",
+  "exports": {
+    ".": "./index.mjs"
+  },
+  "files": [
+    "index.mjs"
+  ],
+  "dependencies": {
+    "@matrix-bridge/core": "1.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "matrix",
+    "bridge",
+    "adapter",
+    "antigravity",
+    "agy"
+  ],
+  "license": "MIT"
+}
